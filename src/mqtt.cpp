@@ -26,8 +26,6 @@ const char* door2_statusSwitchLogic = DOOR2_STATUS_SWITCH_LOGIC;
 
 String availabilityBase = CLIENT;
 String availabilitySuffix = "/availability";
-String availabilityTopicStr = availabilityBase + availabilitySuffix;
-const char* availabilityTopic = availabilityTopicStr.c_str();
 const char* birthMessage = "online";
 const char* lwtMessage = "offline";
 
@@ -41,10 +39,30 @@ void Mqtt::begin ()
     m_client.setServer(mqtt_broker, 1883);
     m_client.setCallback(onMqttMessage);
     snprintf(m_uniqueId, 20, "%02X%02X", g_managedWiFi.getMac()[4], g_managedWiFi.getMac()[5]);
+    m_client.setBufferSize(812);
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
 }
+
+void Mqtt::loop ()
+{
+    if (!m_client.connected()) {
+      reconnect();
+    }
+    m_client.loop();
+}
+
+bool Mqtt::connected ()
+{
+  return m_client.connected();
+}
+
 
 // Function that publishes birthMessage
 void Mqtt::publishBirthMessage() {
+
+  char availabilityTopic[80];
+  snprintf(availabilityTopic, 80, "%s/avail", m_topicMQTTHeader);
+
   // Publish the birthMessage
   DEBUG_PRINT("Publishing birth message \"");
   DEBUG_PRINT(birthMessage);
@@ -130,6 +148,9 @@ void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) {
 // Function that runs in loop() to connect/reconnect to the MQTT broker, and publish the current door statuses on connect
 void Mqtt::reconnect() {
   // Loop until we're reconnected
+  char availabilityTopic[80];
+  snprintf(availabilityTopic, 80, "%s/avail", m_topicMQTTHeader);
+
   while (!m_client.connected()) {
     DEBUG_PRINT("Attempting MQTT connection...");
     // Attempt to connect

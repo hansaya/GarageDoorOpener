@@ -15,7 +15,9 @@ class Mqtt
 public:
     Mqtt (): m_espClient(), m_client(m_espClient) {}
     void begin ();
+    void loop ();
     void publishBirthMessage ();
+    bool connected();
     void triggerDoorAction(String requestedDoor, String requestedAction);
     void mqttCalllBack(char* topic, byte* payload, unsigned int length);
     void reconnect ();
@@ -32,6 +34,7 @@ private:
     int m_subTopicCnt;
     String m_topics[CALL_BACK_LIMIT];
     TOPIC_CALLBACK_SIGNATURE m_callBacks[CALL_BACK_LIMIT];
+    char m_topicMQTTHeader[50];
 };
 
 extern Mqtt g_mqtt;

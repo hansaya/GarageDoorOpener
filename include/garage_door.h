@@ -8,6 +8,7 @@ class GarageDoor
 public:
     GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin);
     void begin ();
+    void loop ();
     void open ();
     bool opened ();
 private:
@@ -19,6 +20,7 @@ private:
     uint16_t m_relayPin;
     uint16_t m_statusPin;
     char m_topicMQTTHeader[50];
+    bool m_publishConfig;
 };
 
 #endif

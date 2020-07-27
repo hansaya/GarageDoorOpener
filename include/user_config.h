@@ -11,7 +11,7 @@
 #define DEBUG_SERIAL
 
 // -- Project -------------------------------------------
-#define CLIENT                 "GarageDoorTest"          // Client ID for the ESP
+#define CLIENT                 "GarageDoor"          // Client ID for the ESP
 
 // MQTT Parameters
 
@@ -19,7 +19,7 @@
 #define MQTT_PORT               1883                // [MQTT] MQTT Port on the Server
 #define MQTT_USERNAME ""
 #define MQTT_PASSWORD ""
-#define MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX  "t_homeassistant"
+#define MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX  "homeassistant"
 
 #define STATUS_LED 25
 #define NEO_PIXEL_PIN 21 // v1 board
@@ -85,6 +85,22 @@
    #define     DEBUG_PRINT_WITH_FMT(x, fmt)
    #define     DEBUG_PRINTLN(x)
    #define     DEBUG_PRINTLN_WITH_FMT(x, fmt)
+#endif
+
+// Handle telnet debuging
+#if defined(DEBUG_TELNET)
+void handleTelnet(void) {
+  if (telnetServer.hasClient()) {
+    if (!telnetClient || !telnetClient.connected()) {
+      if (telnetClient) {
+        telnetClient.stop();
+      }
+      telnetClient = telnetServer.available();
+    } else {
+      telnetServer.available().stop();
+    }
+  }
+}
 #endif
 
 #endif

@@ -13,12 +13,14 @@ void ManagedWiFi::begin ()
   m_mac[6] = '\0';
   char hostname [24];
   snprintf(hostname, 24, "%s_%02X%02X", CLIENT, m_mac[4], m_mac[5]);
+  m_hostName = hostname;
   char macAddress[24] = {'\0'};
   snprintf(macAddress, 24, "%02X%02X%02X%02X%02X%02X", m_mac[0], m_mac[1], m_mac[2], m_mac[3], m_mac[4], m_mac[5]);
   DEBUG_PRINT("Mac address: ");
-  DEBUG_PRINTLN(macAddress);
+  DEBUG_PRINT(macAddress);
+  DEBUG_PRINT(" Host: ");
+  DEBUG_PRINTLN(m_hostName);
 
-  m_hostName = hostname;
   m_macString = macAddress;
 
   // Connect to access point

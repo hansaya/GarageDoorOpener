@@ -3,17 +3,26 @@
 #include "mqtt.h"
 #include <ArduinoJson.h>
 
-void topicCallback(String payload)
-{
-    g_mqtt.mqttCalllBack (topic, payload, length);
-}
+// void topicCallback(String payload)
+// {
+//     g_mqtt.mqttCalllBack (topic, payload, length);
+// }
 
 GarageDoor::GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin) 
     : m_id (identification),
     m_relayPin (relayPin),
-    m_statusPin (statusPin)
+    m_statusPin (statusPin),
+    m_publishConfig (false)
 {
-    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+}
+
+void GarageDoor::loop ()
+{
+    if (!m_publishConfig && g_mqtt.connected ())
+    {
+        mqttAnnounce ();
+        m_publishConfig = true;
+    }
 }
 
 
@@ -22,7 +31,13 @@ void GarageDoor::begin ()
     pinMode(m_relayPin, OUTPUT);
     pinMode(m_statusPin, INPUT_PULLUP);
 
-    g_mqtt.addCallBack ();
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+    char cmdTopic[80];
+    snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
+
+    g_mqtt.addCallBack (cmdTopic, [](String payload) {
+        DEBUG_PRINTLN(payload);
+    });
 }
 
 void GarageDoor::open ()
@@ -31,8 +46,8 @@ void GarageDoor::open ()
 
 void GarageDoor::mqttAnnounce ()
 {
-    char statusDiscoverTopic[50];
-    snprintf(statusDiscoverTopic, 50, "%s/%s/config", m_topicMQTTHeader, m_id);
+    char statusDiscoverTopic[80];
+    snprintf(statusDiscoverTopic, 80, "%s/%s/config", m_topicMQTTHeader, m_id.c_str ());
 
     StaticJsonDocument<500> root;
     root["~"] = m_topicMQTTHeader;
@@ -55,8 +70,8 @@ void GarageDoor::mqttAnnounce ()
 
 void GarageDoor::publishStatus ()
 {
-    char statusTopic[50];
-    snprintf(statusTopic, 50, "%s/%s/state", m_topicMQTTHeader, m_id);
+    char statusTopic[80];
+    snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id);
 
     StaticJsonDocument<100> json;
     if (opened ())
