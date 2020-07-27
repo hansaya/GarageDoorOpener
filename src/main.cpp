@@ -1,98 +1,216 @@
-#include <SmartThingsESP8266WiFi.h>
-#include <Everything.h> //Master Brain of ST_Anything library that ties everything together and performs ST Shield communications
-#include <S_TimedRelay.h> //Implements a Sensor to control a digital output pin with timing capabilities
+/*   
+ * GarHAge
+ * a Home-Automation-friendly ESP8266-based MQTT Garage Door Controller
+ * Licensed under the MIT License, Copyright (c) 2017 marthoc
+*/
 
-#include <WiFiManager.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
+#include <Arduino.h>
+#include "ota.h"
+#include "config.h"
+#include "managed_wifi.h"
+#include "input.h"
+#include "led.h"
+#include "Adafruit_CCS811.h"
+#include "garage_door.h"
 
-#define BUILTIN_LED 16
+const int relayActiveTime = 500;
+int door1_lastStatusValue = 2;
+int door2_lastStatusValue = 2;
+unsigned long door1_lastSwitchTime = 0;
+unsigned long door2_lastSwitchTime = 0;
+int debounceTime = 2000;
 
-#define PIN_TIMEDRELAY_1 14 //SmartThings Capability "Relay Switch"
-#define PIN_TIMEDRELAY_2 12 //SmartThings Capability "Relay Switch"
-#define PIN_TIMEDRELAY_3 13 //SmartThings Capability "Relay Switch"
+const boolean activeHighRelay = ACTIVE_HIGH_RELAY;
 
-const unsigned int serverPort = 8090; // port to run the http server on
+Adafruit_CCS811 ccs;
+GarageDoor leftDoor("LeftGarageDoor", DOOR1_OPEN_PIN, DOOR1_STATUS_PIN);
+GarageDoor rightDoor("RightGarageDoor", DOOR2_OPEN_PIN, DOOR2_STATUS_PIN);
 
-// Smartthings / Hubitat Hub TCP/IP Address
-IPAddress hubIp(172,168,1,25);    // smartthings/hubitat hub ip //  <---You must edit this line!
+// Functions that run in loop() to check each loop if door status (open/closed) has changed and call publish_doorX_status() to publish any change if so
+// void check_door1_status() {
+//   int currentStatusValue = digitalRead(door1_statusPin);
+//   if (currentStatusValue != door1_lastStatusValue) {
+//     unsigned int currentTime = millis();
+//     if (currentTime - door1_lastSwitchTime >= debounceTime) {
+//       publish_door1_status();
+//       door1_lastStatusValue = currentStatusValue;
+//       door1_lastSwitchTime = currentTime;
+//     }
+//   }
+// }
 
-// SmartThings / Hubitat Hub TCP/IP Address: UNCOMMENT line that corresponds to your hub, COMMENT the other
-const unsigned int hubPort = 39500;   // smartthings hub port
+// void check_door2_status() {
+//   int currentStatusValue = digitalRead(door2_statusPin);
+//   if (currentStatusValue != door2_lastStatusValue) {
+//     unsigned int currentTime = millis();
+//     if (currentTime - door2_lastSwitchTime >= debounceTime) {
+//       // publish_door2_status();
+//       door2_lastStatusValue = currentStatusValue;
+//       door2_lastSwitchTime = currentTime;
+//     }
+//   }
+// }
 
-// Manages wifi portal
-void ManageWifi (bool reset_config = false)
-{
-  WiFiManager wifiManager;
-  wifiManager.setConnectTimeout(60);
-
-  wifiManager.setConfigPortalTimeout(60);
-  wifiManager.setMinimumSignalQuality(10);
-  
-  if (reset_config)
-    wifiManager.startConfigPortal("Garage Door Opener");
-  else
-    wifiManager.autoConnect("St_anything"); // This will hold the connection till it get a connection
+// Function that toggles the relevant relay-connected output pin
+void toggleRelay(int pin) {
+  if (activeHighRelay) {
+    digitalWrite(pin, HIGH);
+    delay(relayActiveTime);
+    digitalWrite(pin, LOW);
+  }
+  else {
+    digitalWrite(pin, LOW);
+    delay(relayActiveTime);
+    digitalWrite(pin, HIGH);
+  }
 }
 
-void setup()
+// Handle input
+void handleButtonInput ()
 {
+  if (g_input.GetButton().events[0]->pressed)
+  {
+    g_input.GetButton().events[0]->pressed = false;
+    Serial.print("S");
+  }
+  if (g_input.GetButton().events[1]->pressed)
+  {
+    g_input.GetButton().events[1]->pressed = false;
+    Serial.print("L");
+  }
+  if (g_input.GetButton().events[2]->pressed)
+  {
+    g_input.GetButton().events[2]->pressed = false;
+    Serial.print("R");
+    g_managedWiFi.manageWiFi(true);
+  }
+}
+
+void setup() {
+  g_input.begin ();
+  g_led.begin ();
+  leftDoor.begin ();
+  rightDoor.begin ();
+
   Serial.begin(115200);
-  WiFi.mode(WIFI_STA);
-  byte mac[7];
-  WiFi.macAddress(mac);
-  char hostname [20];
-  snprintf(hostname, 20, "GarageDoor_%02X%02X", mac[4], mac[5]);
-  MDNS.begin(hostname);
-  WiFi.hostname(hostname);
-  wifi_station_set_hostname(hostname);
 
   // Connect to access point
-  ManageWifi ();
-  
-  //Special sensors/executors (uses portions of both polling and executor classes)
-  static st::S_TimedRelay sensor1(F("relaySwitch1"), PIN_TIMEDRELAY_1, LOW, false, 400, 0, 1);
-//  static st::S_TimedRelay sensor2(F("relaySwitch2"), PIN_TIMEDRELAY_2, LOW, false, 400, 0, 1);
-  static st::S_TimedRelay sensor3(F("relaySwitch3"), PIN_TIMEDRELAY_3, LOW, false, 400, 0, 1);
+  g_managedWiFi.begin ();
 
-  st::Everything::debug=true;
-  st::Executor::debug=true;
-  st::Device::debug=true;
-
-  st::Everything::SmartThing = new st::SmartThingsESP8266WiFi(serverPort, hubIp, hubPort, st::receiveSmartString);
-  st::Everything::init();
+  // Wire.begin(22,23);
+  pinMode(CCS811_WAKE, OUTPUT);
+  digitalWrite(CCS811_WAKE, LOW);
+  if(!ccs.begin(0x5A)){
+    DEBUG_PRINTLN("Failed to start CCS811 sensor! Please check your wiring.");
+  }
+  else
+    ccs.setTempOffset (14.0);
+  digitalWrite(CCS811_WAKE, HIGH);
   
-  st::Everything::addSensor(&sensor1);
-//  st::Everything::addSensor(&sensor2);
-  st::Everything::addSensor(&sensor3); 
-        
-  st::Everything::initDevices();
+  // Setup the output and input pins used in the sketch
+  // Set the lastStatusValue variables to the state of the status pins at setup time
 
-  ArduinoOTA.setHostname(hostname);
-  ArduinoOTA.onStart([]() {
-    Serial.println("Start");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  
-  ArduinoOTA.begin();  
+  // // Setup Door 1 pins
+  // pinMode(door1_openPin, OUTPUT);
+  // pinMode(door1_closePin, OUTPUT);
+  // // Set output pins LOW with an active-high relay
+  // if (activeHighRelay) {
+  //   digitalWrite(door1_openPin, LOW);
+  //   digitalWrite(door1_closePin, LOW);
+  // }
+  // // Set output pins HIGH with an active-low relay
+  // else {
+  //   digitalWrite(door1_openPin, HIGH);
+  //   digitalWrite(door1_closePin, HIGH);
+  // }
+  // // Set input pin to use internal pullup resistor
+  // pinMode(door1_statusPin, INPUT_PULLUP);
+  // // Update variable with current door state
+  // door1_lastStatusValue = digitalRead(door1_statusPin);
+
+  // // Setup Door 2 pins
+  // if (door2_enabled) {
+  //   pinMode(door2_openPin, OUTPUT);
+  //   pinMode(door2_closePin, OUTPUT);
+  //   // Set output pins LOW with an active-high relay
+  //   if (activeHighRelay) {
+  //     digitalWrite(door2_openPin, LOW);
+  //     digitalWrite(door2_closePin, LOW);
+  //   }
+  //   // Set output pins HIGH with an active-low relay
+  //   else {
+  //     digitalWrite(door2_openPin, HIGH);
+  //     digitalWrite(door2_closePin, HIGH);
+  //   }
+  //   // Set input pin to use internal pullup resistor
+  //   pinMode(door2_statusPin, INPUT_PULLUP);
+  //   // Update variable with current door state
+  //   door2_lastStatusValue = digitalRead(door2_statusPin);
+  // }
+
+  DEBUG_PRINTLN("Starting GarHAge...");
+
+  if (activeHighRelay) {
+    DEBUG_PRINTLN("Relay mode: Active-High");
+  }
+  else {
+    DEBUG_PRINTLN("Relay mode: Active-Low");
+  }
+
+  g_ota.begin ();
 }
 
-void loop()
-{
-  ArduinoOTA.handle();
-  st::Everything::run();
+void loop() {
+  unsigned long currentMillis = millis (); 
+  g_ota.loop ();
+  // Connect/reconnect to the MQTT broker and listen for messages
+  if (!g_ota.busy ())
+  {
+    // if (!client.connected()) {
+    //   reconnect();
+    // }
+    // client.loop();
+    // Check door open/closed status each loop and publish changes
+    // check_door1_status();
+    // check_door2_status();
+
+    if (digitalRead (ISO_IN_PIN) == HIGH)
+    {
+      g_led.SetPixColor (CRGB::Purple);
+      g_led.ShowPixColor();
+    }
+
+    static unsigned long mqttConnectWaitPeriod;
+    if (currentMillis - mqttConnectWaitPeriod >= 30000)
+    {
+      mqttConnectWaitPeriod = currentMillis;
+
+      // CCS811
+      digitalWrite(CCS811_WAKE, LOW);
+      if(ccs.available()){
+        if(!ccs.readData()){
+          DEBUG_PRINT("CO2: ");
+          DEBUG_PRINT(ccs.geteCO2());
+          DEBUG_PRINT("ppm, TVOC: ");
+          DEBUG_PRINT(ccs.getTVOC());
+          DEBUG_PRINT(" Temp: ");
+          DEBUG_PRINTLN(ccs.calculateTemperature());
+        }
+        else
+        {
+          g_led.SetPixColor (CRGB::Red);
+          g_led.ShowPixColor();
+        }
+      }
+      else
+      {
+        g_led.SetPixColor (CRGB::Orange);
+        g_led.ShowPixColor();
+      }
+      digitalWrite(CCS811_WAKE, HIGH);
+    }
+
+    handleButtonInput ();
+  }
+
 }
