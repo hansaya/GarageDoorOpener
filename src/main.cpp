@@ -27,31 +27,6 @@ Adafruit_CCS811 ccs;
 GarageDoor leftDoor("LeftGarageDoor", DOOR1_OPEN_PIN, DOOR1_STATUS_PIN);
 GarageDoor rightDoor("RightGarageDoor", DOOR2_OPEN_PIN, DOOR2_STATUS_PIN);
 
-// Functions that run in loop() to check each loop if door status (open/closed) has changed and call publish_doorX_status() to publish any change if so
-// void check_door1_status() {
-//   int currentStatusValue = digitalRead(door1_statusPin);
-//   if (currentStatusValue != door1_lastStatusValue) {
-//     unsigned int currentTime = millis();
-//     if (currentTime - door1_lastSwitchTime >= debounceTime) {
-//       publish_door1_status();
-//       door1_lastStatusValue = currentStatusValue;
-//       door1_lastSwitchTime = currentTime;
-//     }
-//   }
-// }
-
-// void check_door2_status() {
-//   int currentStatusValue = digitalRead(door2_statusPin);
-//   if (currentStatusValue != door2_lastStatusValue) {
-//     unsigned int currentTime = millis();
-//     if (currentTime - door2_lastSwitchTime >= debounceTime) {
-//       // publish_door2_status();
-//       door2_lastStatusValue = currentStatusValue;
-//       door2_lastSwitchTime = currentTime;
-//     }
-//   }
-// }
-
 // Function that toggles the relevant relay-connected output pin
 void toggleRelay(int pin) {
   if (activeHighRelay) {
@@ -100,8 +75,8 @@ void setup() {
   g_managedWiFi.begin ();
 
 #if defined(DEBUG_TELNET)
-   telnetServer.begin();
-   telnetServer.setNoDelay(true);
+  telnetServer.begin();
+  telnetServer.setNoDelay(true);
 #endif
 
   // Wire.begin(22,23);

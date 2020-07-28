@@ -18,15 +18,12 @@ public:
     void loop ();
     void publishBirthMessage ();
     bool connected();
-    void triggerDoorAction(String requestedDoor, String requestedAction);
     void mqttCalllBack(char* topic, byte* payload, unsigned int length);
     void reconnect ();
-    void publish_door1_status ();
-    void publish_door2_status ();
-    void getGarageDoor1Command ();
     void publishToMQTT(const char* p_topic,const char* p_payload);
     char* getUniqueId () { return m_uniqueId; }
     void addCallBack (String topic, TOPIC_CALLBACK_SIGNATURE callback);
+    void subscribe (char* topic);
 private:
     WiFiClient m_espClient;
     PubSubClient m_client;

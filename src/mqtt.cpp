@@ -7,25 +7,6 @@ const char* mqtt_clientId = CLIENT;
 const char* mqtt_username = MQTT_USERNAME;
 const char* mqtt_password = MQTT_PASSWORD;
 
-const char* door1_alias = DOOR1_ALIAS;
-const char* mqtt_door1_action_topic = MQTT_DOOR1_ACTION_TOPIC;
-const char* mqtt_door1_status_topic = MQTT_DOOR1_STATUS_TOPIC;
-const int door1_openPin = DOOR1_OPEN_PIN;
-const int door1_closePin = DOOR1_CLOSE_PIN;
-const int door1_statusPin = DOOR1_STATUS_PIN;
-const char* door1_statusSwitchLogic = DOOR1_STATUS_SWITCH_LOGIC;
-
-const boolean door2_enabled = DOOR2_ENABLED;
-const char* door2_alias = DOOR2_ALIAS;
-const char* mqtt_door2_action_topic = MQTT_DOOR2_ACTION_TOPIC;
-const char* mqtt_door2_status_topic = MQTT_DOOR2_STATUS_TOPIC;
-const int door2_openPin = DOOR2_OPEN_PIN;
-const int door2_closePin = DOOR2_CLOSE_PIN;
-const int door2_statusPin = DOOR2_STATUS_PIN;
-const char* door2_statusSwitchLogic = DOOR2_STATUS_SWITCH_LOGIC;
-
-String availabilityBase = CLIENT;
-String availabilitySuffix = "/availability";
 const char* birthMessage = "online";
 const char* lwtMessage = "offline";
 
@@ -56,7 +37,6 @@ bool Mqtt::connected ()
   return m_client.connected();
 }
 
-
 // Function that publishes birthMessage
 void Mqtt::publishBirthMessage() {
 
@@ -72,65 +52,14 @@ void Mqtt::publishBirthMessage() {
   m_client.publish(availabilityTopic, birthMessage, true);
 }
 
-// // Function called by callback() when a message is received 
-// // Passes the message topic as the "requestedDoor" parameter and the message payload as the "requestedAction" parameter
-// void Mqtt::triggerDoorAction(String requestedDoor, String requestedAction) {
-//   if (requestedDoor == mqtt_door1_action_topic && requestedAction == "OPEN") {
-//     DEBUG_PRINT("Triggering ");
-//     DEBUG_PRINT(door1_alias);
-//     DEBUG_PRINTLN(" OPEN relay!");
-//     m_relay1.event = true;
-//     m_relay1.cmdOn = true;
-//     // toggleRelay(door1_openPin);
-//   }
-//   else if (requestedDoor == mqtt_door1_action_topic && requestedAction == "CLOSE") {
-//     DEBUG_PRINT("Triggering ");
-//     DEBUG_PRINT(door1_alias);
-//     DEBUG_PRINTLN(" CLOSE relay!");
-//     m_relay2.event = true;
-//     m_relay1.cmdOn = false;
-//     // toggleRelay(door1_closePin);
-//   }
-//   else if (requestedDoor == mqtt_door1_action_topic && requestedAction == "STATE") {
-//     DEBUG_PRINT("Publishing on-demand status update for ");
-//     DEBUG_PRINT(door1_alias);
-//     DEBUG_PRINTLN("!");
-//     publishBirthMessage();
-//     publish_door1_status();
-//   }
-//   else if (requestedDoor == mqtt_door2_action_topic && requestedAction == "OPEN") {
-//     DEBUG_PRINT("Triggering ");
-//     DEBUG_PRINT(door2_alias);
-//     DEBUG_PRINTLN(" OPEN relay!");
-//     // toggleRelay(door2_openPin);
-//   }
-//   else if (requestedDoor == mqtt_door2_action_topic && requestedAction == "CLOSE") {
-//     DEBUG_PRINT("Triggering ");
-//     DEBUG_PRINT(door2_alias);
-//     DEBUG_PRINTLN(" CLOSE relay!");
-//     // toggleRelay(door2_closePin);
-//   }
-//   else if (requestedDoor == mqtt_door2_action_topic && requestedAction == "STATE") {
-//     DEBUG_PRINT("Publishing on-demand status update for ");
-//     DEBUG_PRINT(door2_alias);
-//     DEBUG_PRINTLN("!");
-//     publishBirthMessage();
-//     publish_door2_status();
-//   }  
-//   else { DEBUG_PRINTLN("Unrecognized action payload... taking no action!");
-//   }
-// }
-
 // Callback when MQTT message is received; calls triggerDoorAction(), passing topic and payload as parameters
 void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) {
     DEBUG_PRINT("Message arrived [");
     DEBUG_PRINT(topic);
     DEBUG_PRINT("] ");
-
     for (int i = 0; i < length; i++) {
         DEBUG_PRINT((char)payload[i]);
     }
-
     DEBUG_PRINTLN();
 
     String topicToProcess = topic;
@@ -156,26 +85,8 @@ void Mqtt::reconnect() {
     // Attempt to connect
     if (m_client.connect(mqtt_clientId, mqtt_username, mqtt_password, availabilityTopic, 0, true, lwtMessage)) {
       DEBUG_PRINTLN("Connected!");
-
       // Publish the birth message on connect/reconnect
       publishBirthMessage();
-
-    //   // Subscribe to the action topics to listen for action messages
-    //   DEBUG_PRINT("Subscribing to ");
-    //   DEBUG_PRINT(mqtt_door1_action_topic);
-    //   DEBUG_PRINTLN("...");
-    //   m_client.subscribe(mqtt_door1_action_topic);
-      
-    //   if (door2_enabled) {
-    //     DEBUG_PRINT("Subscribing to ");
-    //     DEBUG_PRINT(mqtt_door2_action_topic);
-    //     DEBUG_PRINTLN("...");
-    //     m_client.subscribe(mqtt_door2_action_topic);
-    //   }
-
-      // Publish the current door status on connect/reconnect to ensure status is synced with whatever happened while disconnected
-    //   publish_door1_status();
-    //   publish_door2_status();
     } 
     else {
       DEBUG_PRINT("failed, rc=");
@@ -187,88 +98,14 @@ void Mqtt::reconnect() {
   }
 }
 
-// // Functions that check door status and publish an update when called
-// void Mqtt::publish_door1_status() {
-//   if (digitalRead(door1_statusPin) == LOW) {
-//     if (door1_statusSwitchLogic == "NO") {
-//       DEBUG_PRINT(door1_alias);
-//       DEBUG_PRINT(" closed! Publishing to ");
-//       DEBUG_PRINT(mqtt_door1_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door1_status_topic, "closed", true);
-//     }
-//     else if (door1_statusSwitchLogic == "NC") {
-//       DEBUG_PRINT(door1_alias);
-//       DEBUG_PRINT(" open! Publishing to ");
-//       DEBUG_PRINT(mqtt_door1_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door1_status_topic, "open", true);      
-//     }
-//     else {
-//       DEBUG_PRINTLN("Error! Specify only either NO or NC for DOOR1_STATUS_SWITCH_LOGIC in config.h! Not publishing...");
-//     }
-//   }
-//   else {
-//     if (door1_statusSwitchLogic == "NO") {
-//       DEBUG_PRINT(door1_alias);
-//       DEBUG_PRINT(" open! Publishing to ");
-//       DEBUG_PRINT(mqtt_door1_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door1_status_topic, "open", true);
-//     }
-//     else if (door1_statusSwitchLogic == "NC") {
-//       DEBUG_PRINT(door1_alias);
-//       DEBUG_PRINT(" closed! Publishing to ");
-//       DEBUG_PRINT(mqtt_door1_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door1_status_topic, "closed", true);      
-//     }
-//     else {
-//       DEBUG_PRINTLN("Error! Specify only either NO or NC for DOOR1_STATUS_SWITCH_LOGIC in config.h! Not publishing...");
-//     }
-//   }
-// }
-
-// void Mqtt::publish_door2_status() {
-//   if (digitalRead(door2_statusPin) == LOW) {
-//     if (door2_statusSwitchLogic == "NO") {
-//       DEBUG_PRINT(door2_alias);
-//       DEBUG_PRINT(" closed! Publishing to ");
-//       DEBUG_PRINT(mqtt_door2_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door2_status_topic, "closed", true);
-//     }
-//     else if (door2_statusSwitchLogic == "NC") {
-//       DEBUG_PRINT(door2_alias);
-//       DEBUG_PRINT(" open! Publishing to ");
-//       DEBUG_PRINT(mqtt_door2_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door2_status_topic, "open", true);      
-//     }
-//     else {
-//       DEBUG_PRINTLN("Error! Specify only either NO or NC for DOOR2_STATUS_SWITCH_LOGIC in config.h! Not publishing...");
-//     }
-//   }
-//   else {
-//     if (door2_statusSwitchLogic == "NO") {
-//       DEBUG_PRINT(door2_alias);
-//       DEBUG_PRINT(" open! Publishing to ");
-//       DEBUG_PRINT(mqtt_door2_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door2_status_topic, "open", true);
-//     }
-//     else if (door2_statusSwitchLogic == "NC") {
-//       DEBUG_PRINT(door2_alias);
-//       DEBUG_PRINT(" closed! Publishing to ");
-//       DEBUG_PRINT(mqtt_door2_status_topic);
-//       DEBUG_PRINTLN("...");
-//       m_client.publish(mqtt_door2_status_topic, "closed", true);      
-//     }
-//     else {
-//       DEBUG_PRINTLN("Error! Specify only either NO or NC for DOOR2_STATUS_SWITCH_LOGIC in config.h! Not publishing...");
-//     }
-//   }
-// }
+void Mqtt::subscribe(char* topic)
+{
+  DEBUG_PRINT("Subscribing to ");
+  DEBUG_PRINT(topic);
+  DEBUG_PRINTLN("...");
+    
+  m_client.subscribe(topic);
+}
 
 // Publish the MQTT payload.
 void Mqtt::publishToMQTT(const char* p_topic,const char* p_payload) {

@@ -3,16 +3,12 @@
 #include "mqtt.h"
 #include <ArduinoJson.h>
 
-// void topicCallback(String payload)
-// {
-//     g_mqtt.mqttCalllBack (topic, payload, length);
-// }
-
 GarageDoor::GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin) 
     : m_id (identification),
     m_relayPin (relayPin),
     m_statusPin (statusPin),
-    m_publishConfig (false)
+    m_publishConfig (false),
+    m_doorOpen (false)
 {
 }
 
@@ -21,10 +17,14 @@ void GarageDoor::loop ()
     if (!m_publishConfig && g_mqtt.connected ())
     {
         mqttAnnounce ();
+        subscribeToCmd ();
         m_publishConfig = true;
     }
+    if (digitalRead (m_statusPin) == HIGH)
+    {
+        m_doorOpen = true;
+    }
 }
-
 
 void GarageDoor::begin ()
 {
@@ -35,13 +35,55 @@ void GarageDoor::begin ()
     char cmdTopic[80];
     snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
 
-    g_mqtt.addCallBack (cmdTopic, [](String payload) {
+    g_mqtt.addCallBack (cmdTopic, [this](String payload) {
         DEBUG_PRINTLN(payload);
+        if (payload == "OPEN")
+        {
+            this->open ();
+        }
+        else if(payload == "CLOSE")
+        {
+            this->close ();
+        }
+        else if(payload == "STOP")
+        {
+            this->publishStatus ();
+        }
     });
 }
 
 void GarageDoor::open ()
 {
+    DEBUG_PRINT(m_id);
+    DEBUG_PRINTLN("opening Lamda");
+
+    // Sensor only triggered when door is closed so we can use it to trigger if the door is down.
+    if (!m_doorOpen)
+        triggerRelay ();
+}
+
+void GarageDoor::close ()
+{
+    DEBUG_PRINT(m_id);
+    DEBUG_PRINTLN("closing Lamda");
+
+    // Sensor only triggered when door is closed so we can use it not trigger if the door is down.
+    if (m_doorOpen)
+        triggerRelay ();
+}
+
+bool GarageDoor::opened ()
+{
+    return m_doorOpen;
+}
+
+void GarageDoor::triggerRelay ()
+{
+    // digitalWrite (m_relayPin, HIGH);
+    m_lightTicker.once_ms<uint16_t>(200, [](uint16_t pin) {
+        DEBUG_PRINTLN("Relay triggered for 200ms");
+        // digitalWrite (pin, LOW);
+    }, m_relayPin);
 }
 
 void GarageDoor::mqttAnnounce ()
@@ -51,7 +93,7 @@ void GarageDoor::mqttAnnounce ()
 
     StaticJsonDocument<500> root;
     root["~"] = m_topicMQTTHeader;
-    root["dev_cla"] = "garage_door";
+    // root["dev_cla"] = "garage_door";
     root["uniq_id"] = m_id;
     root["name"] = m_id + " Status";
     root["avty_t"] = "~/avail";
@@ -68,16 +110,23 @@ void GarageDoor::mqttAnnounce ()
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
 }
 
+void GarageDoor::subscribeToCmd ()
+{
+    char cmdTopic[80];
+    snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
+    g_mqtt.subscribe(cmdTopic);
+}
+
 void GarageDoor::publishStatus ()
 {
     char statusTopic[80];
-    snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id);
+    snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id.c_str ());
 
     StaticJsonDocument<100> json;
     if (opened ())
         json["status"] = "open";
     else
-        json["status"] = "close";
+        json["status"] = "closed";
 
     char outgoingJsonBuffer[100];
     serializeJson(json, outgoingJsonBuffer);
