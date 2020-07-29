@@ -5,10 +5,11 @@
 
 bool ManagedWiFi::m_gotTheConfig = true;
 
-void ManagedWiFi::begin ()
+ManagedWiFi::ManagedWiFi ()
+  : m_hostName("NA"),
+  m_macString ("NA")
 {
   // Set the host name
-  // byte mac[7];
   WiFi.macAddress(m_mac);
   m_mac[6] = '\0';
   char hostname [24];
@@ -16,20 +17,23 @@ void ManagedWiFi::begin ()
   m_hostName = hostname;
   char macAddress[24] = {'\0'};
   snprintf(macAddress, 24, "%02X%02X%02X%02X%02X%02X", m_mac[0], m_mac[1], m_mac[2], m_mac[3], m_mac[4], m_mac[5]);
+  m_macString = macAddress;
+}
+
+void ManagedWiFi::begin ()
+{
   DEBUG_PRINT("Mac address: ");
-  DEBUG_PRINT(macAddress);
+  DEBUG_PRINT(m_macString);
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
-
-  m_macString = macAddress;
 
   // Connect to access point
   WiFi.onEvent(ManagedWiFi::event);
   manageWiFi ();
 
-  MDNS.begin(hostname);
+  MDNS.begin(m_hostName.c_str());
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  WiFi.setHostname(hostname);
+  WiFi.setHostname(m_hostName.c_str());
   WiFi.mode(WIFI_STA);
 }
 

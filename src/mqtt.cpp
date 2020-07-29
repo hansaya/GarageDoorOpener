@@ -15,21 +15,35 @@ void onMqttMessage(char* topic, byte* payload, unsigned int length)
     g_mqtt.mqttCalllBack (topic, payload, length);
 }
 
+Mqtt::Mqtt ()
+  : m_espClient(),
+  m_client(m_espClient) 
+{}
+
 void Mqtt::begin ()
 {
+    snprintf(m_uniqueId, 20, "%02X%02X", g_managedWiFi.getMac()[4], g_managedWiFi.getMac()[5]);
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+
     m_client.setServer(mqtt_broker, 1883);
     m_client.setCallback(onMqttMessage);
-    snprintf(m_uniqueId, 20, "%02X%02X", g_managedWiFi.getMac()[4], g_managedWiFi.getMac()[5]);
     m_client.setBufferSize(812);
-    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
 }
 
 void Mqtt::loop ()
 {
-    if (!m_client.connected()) {
-      reconnect();
+  unsigned long currentMillis = millis ();  // Time now
+  // Connect to MQTT server
+  if (!m_client.connected())
+  {
+    static unsigned long mqttConnectWaitPeriod;
+    if (currentMillis - mqttConnectWaitPeriod >= 30000)
+    {
+      mqttConnectWaitPeriod = currentMillis;
+      connect ();
     }
-    m_client.loop();
+  }
+  m_client.loop();
 }
 
 bool Mqtt::connected ()
@@ -74,37 +88,31 @@ void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) {
     }
 }
 
-// Function that runs in loop() to connect/reconnect to the MQTT broker, and publish the current door statuses on connect
-void Mqtt::reconnect() {
-  // Loop until we're reconnected
+void Mqtt::connect() {
+  DEBUG_PRINT("Connecting to MQTT with client id ");
+  String clientId = CLIENT;
+  clientId += String(random(0xffff), HEX);
+  DEBUG_PRINT(clientId);
+  DEBUG_PRINTLN("...");
   char availabilityTopic[80];
   snprintf(availabilityTopic, 80, "%s/avail", m_topicMQTTHeader);
 
-  while (!m_client.connected()) {
-    DEBUG_PRINT("Attempting MQTT connection...");
-    // Attempt to connect
-    if (m_client.connect(mqtt_clientId, mqtt_username, mqtt_password, availabilityTopic, 0, true, lwtMessage)) {
-      DEBUG_PRINTLN("Connected!");
-      // Publish the birth message on connect/reconnect
-      publishBirthMessage();
-    } 
-    else {
-      DEBUG_PRINT("failed, rc=");
-      DEBUG_PRINT(m_client.state());
-      DEBUG_PRINTLN(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+  // Attempt to connect
+  if (m_client.connect(clientId.c_str(), mqtt_username, mqtt_password, availabilityTopic, 0, true, "offline"))
+  {
+    publishBirthMessage();
+    // Subscribe to the topics.
+    for (int i=0; i<m_subTopicCnt; i++)
+    {
+      subscribe (m_topics[i].c_str());
     }
   }
-}
-
-void Mqtt::subscribe(char* topic)
-{
-  DEBUG_PRINT("Subscribing to ");
-  DEBUG_PRINT(topic);
-  DEBUG_PRINTLN("...");
-    
-  m_client.subscribe(topic);
+  else
+  {
+    DEBUG_PRINT("Failed to connect to MQTT! ");
+    DEBUG_PRINT(m_client.state());
+    DEBUG_PRINTLN(" Trying again in 60 seconds");
+  }
 }
 
 // Publish the MQTT payload.
@@ -122,11 +130,21 @@ void Mqtt::publishToMQTT(const char* p_topic,const char* p_payload) {
   }
 }
 
-void Mqtt::addCallBack (String topic, TOPIC_CALLBACK_SIGNATURE callback)
+void Mqtt::subscribe (String topic, TOPIC_CALLBACK_SIGNATURE callback)
 {
+    if (connected ())
+      subscribe (topic.c_str());
     m_topics[m_subTopicCnt]=topic;
     m_callBacks[m_subTopicCnt]=callback;
     m_subTopicCnt++;
+}
+
+void Mqtt::subscribe(const char* topic)
+{
+  DEBUG_PRINT("Subscribing to ");
+  DEBUG_PRINT(topic);
+  DEBUG_PRINTLN("...");
+  m_client.subscribe(topic);
 }
 
 Mqtt g_mqtt;

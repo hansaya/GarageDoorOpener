@@ -9,15 +9,13 @@ GarageDoor::GarageDoor (String identification, uint16_t relayPin, uint16_t statu
     m_statusPin (statusPin),
     m_publishConfig (false),
     m_doorOpen (false)
-{
-}
+{}
 
 void GarageDoor::loop ()
 {
     if (!m_publishConfig && g_mqtt.connected ())
     {
         mqttAnnounce ();
-        subscribeToCmd ();
         m_publishConfig = true;
     }
     if (digitalRead (m_statusPin) == HIGH)
@@ -28,15 +26,14 @@ void GarageDoor::loop ()
 
 void GarageDoor::begin ()
 {
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
     pinMode(m_relayPin, OUTPUT);
     pinMode(m_statusPin, INPUT_PULLUP);
-
-    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
 
     // Setup a call back function to handle commands.
     char cmdTopic[80];
     snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
-    g_mqtt.addCallBack (cmdTopic, [this](String payload) {
+    g_mqtt.subscribe (cmdTopic, [this](String payload) {
         DEBUG_PRINTLN(payload);
         if (payload == "OPEN")
         {
@@ -109,13 +106,6 @@ void GarageDoor::mqttAnnounce ()
     char outgoingJsonBuffer[500];
     serializeJson(root, outgoingJsonBuffer);
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
-}
-
-void GarageDoor::subscribeToCmd ()
-{
-    char cmdTopic[80];
-    snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
-    g_mqtt.subscribe(cmdTopic);
 }
 
 void GarageDoor::publishStatus ()

@@ -9,7 +9,7 @@
 class ManagedWiFi
 {
 public:
-    ManagedWiFi () {}
+    ManagedWiFi ();
     void begin ();
     void manageWiFi (bool reset_config = false);
     static void event (WiFiEvent_t event);

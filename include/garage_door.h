@@ -26,8 +26,6 @@ private:
     // Publish door status
     void publishStatus ();
     // Subscribe to command topic
-    void subscribeToCmd ();
-    // trigger the relay to open the garage door.
     void triggerRelay ();
 
     Ticker m_lightTicker;

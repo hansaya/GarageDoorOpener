@@ -23,13 +23,13 @@
 
 #define STATUS_LED 25
 #define NEO_PIXEL_PIN 21 // v1 board
-// #define NEO_PIXEL_PIN 23 // v2 board
+//#define NEO_PIXEL_PIN 23 // v2 board
 #define BUTTON 0
 #define ISO_IN_PIN 16
 
 //CCS811 pins
 #define SDA_CUSTOM_PIN 23 // v1 board
-// #define SDA_CUSTOM_PIN 21 // V2 board
+//#define SDA_CUSTOM_PIN 21 // V2 board
 #define SDA_CUSTOM_PIN 22
 #define CCS811_WAKE 13
 #define CCS811_RST 14

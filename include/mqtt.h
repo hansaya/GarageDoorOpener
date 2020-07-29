@@ -13,8 +13,10 @@
 class Mqtt
 {
 public:
-    Mqtt (): m_espClient(), m_client(m_espClient) {}
+    Mqtt ();
+    // Execute anything that belong in setup ()
     void begin ();
+    // logic that needs to run with loop
     void loop ();
     // Publish availability message
     void publishBirthMessage ();
@@ -23,15 +25,17 @@ public:
     // Call back function for MQTT messages.
     void mqttCalllBack(char* topic, byte* payload, unsigned int length);
     // Connect to mqtt server.
-    void reconnect ();
+    void connect ();
     // Publish a message to MQTT server.
     void publishToMQTT(const char* p_topic,const char* p_payload);
     // Get the unique id.
     char* getUniqueId () { return m_uniqueId; }
     // Set a call back for subscribed topics.
-    void addCallBack (String topic, TOPIC_CALLBACK_SIGNATURE callback);
-    void subscribe (char* topic);
+    void subscribe (String topic, TOPIC_CALLBACK_SIGNATURE callback);
 private:
+    // Subscribe to a topic
+    void subscribe (const char* topic);
+
     WiFiClient m_espClient;
     PubSubClient m_client;
     char m_uniqueId[5];
