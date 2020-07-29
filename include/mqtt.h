@@ -16,12 +16,19 @@ public:
     Mqtt (): m_espClient(), m_client(m_espClient) {}
     void begin ();
     void loop ();
+    // Publish availability message
     void publishBirthMessage ();
+    // Return true if connectecd to MQTT server
     bool connected();
+    // Call back function for MQTT messages.
     void mqttCalllBack(char* topic, byte* payload, unsigned int length);
+    // Connect to mqtt server.
     void reconnect ();
+    // Publish a message to MQTT server.
     void publishToMQTT(const char* p_topic,const char* p_payload);
+    // Get the unique id.
     char* getUniqueId () { return m_uniqueId; }
+    // Set a call back for subscribed topics.
     void addCallBack (String topic, TOPIC_CALLBACK_SIGNATURE callback);
     void subscribe (char* topic);
 private:

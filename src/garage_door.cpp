@@ -32,9 +32,10 @@ void GarageDoor::begin ()
     pinMode(m_statusPin, INPUT_PULLUP);
 
     snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+
+    // Setup a call back function to handle commands.
     char cmdTopic[80];
     snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
-
     g_mqtt.addCallBack (cmdTopic, [this](String payload) {
         DEBUG_PRINTLN(payload);
         if (payload == "OPEN")
@@ -79,10 +80,10 @@ bool GarageDoor::opened ()
 
 void GarageDoor::triggerRelay ()
 {
-    // digitalWrite (m_relayPin, HIGH);
-    m_lightTicker.once_ms<uint16_t>(200, [](uint16_t pin) {
-        DEBUG_PRINTLN("Relay triggered for 200ms");
-        // digitalWrite (pin, LOW);
+    digitalWrite (m_relayPin, HIGH);
+    m_lightTicker.once_ms<uint16_t>(400, [](uint16_t pin) {
+        DEBUG_PRINTLN("Relay triggered for 400ms");
+        digitalWrite (pin, LOW);
     }, m_relayPin);
 }
 
