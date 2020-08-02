@@ -8,66 +8,47 @@
 #include "ota.h"
 #include "config.h"
 #include "managed_wifi.h"
-#include "input.h"
+#include "button.h"
 #include "led.h"
 #include "Adafruit_CCS811.h"
 #include "garage_door.h"
 #include "mqtt.h"
 
-const int relayActiveTime = 500;
-int door1_lastStatusValue = 2;
-int door2_lastStatusValue = 2;
-unsigned long door1_lastSwitchTime = 0;
-unsigned long door2_lastSwitchTime = 0;
-int debounceTime = 2000;
-
-const boolean activeHighRelay = ACTIVE_HIGH_RELAY;
-
 Adafruit_CCS811 ccs;
-GarageDoor leftDoor("LeftGarageDoor", DOOR1_OPEN_PIN, DOOR1_STATUS_PIN);
-GarageDoor rightDoor("RightGarageDoor", DOOR2_OPEN_PIN, DOOR2_STATUS_PIN);
+GarageDoor leftDoor("LeftGarageDoor", DOOR1_RELAY_PIN, DOOR1_STATUS_PIN, "Left Garage Door");
+GarageDoor rightDoor("RightGarageDoor", DOOR3_RELAY_PIN, DOOR3_STATUS_PIN, "Right Garage Door");
 
-// Function that toggles the relevant relay-connected output pin
-void toggleRelay(int pin) {
-  if (activeHighRelay) {
-    digitalWrite(pin, HIGH);
-    delay(relayActiveTime);
-    digitalWrite(pin, LOW);
-  }
-  else {
-    digitalWrite(pin, LOW);
-    delay(relayActiveTime);
-    digitalWrite(pin, HIGH);
-  }
-}
+ButtonEvents sortButtonPress ({50, false, true});
+ButtonEvents longButtonPress ({800, false, true});
+ButtonEvents resetButtonPress ({6000, false, true});
+Button<3> gpio0Button (BUTTON, LOW, &sortButtonPress, &longButtonPress, &resetButtonPress);
 
 // Handle input
 void handleButtonInput ()
 {
-  if (g_input.GetButton().events[0]->pressed)
+  if (sortButtonPress.pressed)
   {
-    g_input.GetButton().events[0]->pressed = false;
+    sortButtonPress.pressed = false;
     Serial.print("S");
   }
-  if (g_input.GetButton().events[1]->pressed)
+  if (longButtonPress.pressed)
   {
-    g_input.GetButton().events[1]->pressed = false;
+    longButtonPress.pressed = false;
     Serial.print("L");
   }
-  if (g_input.GetButton().events[2]->pressed)
+  if (resetButtonPress.pressed)
   {
-    g_input.GetButton().events[2]->pressed = false;
+    resetButtonPress.pressed = false;
     Serial.print("R");
     g_managedWiFi.manageWiFi(true);
   }
 }
 
 void setup() {
-  g_input.begin ();
-  g_led.begin ();
-
-
   Serial.begin(115200);
+
+  gpio0Button.begin ();
+  g_led.begin ();
 
   DEBUG_PRINTLN("Starting GarHAge...");
 
@@ -79,7 +60,7 @@ void setup() {
   telnetServer.setNoDelay(true);
 #endif
 
-  // Wire.begin(22,23);
+  // Setup cc811 sensor
   pinMode(CCS811_WAKE, OUTPUT);
   digitalWrite(CCS811_WAKE, LOW);
   if(!ccs.begin(0x5A)){

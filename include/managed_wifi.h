@@ -2,7 +2,6 @@
 #define managed_wifi_h
 
 #include <Arduino.h>
-#include <Ticker.h>
 #include "user_config.h"
 #include "WiFiManager.h"
 
