@@ -35,17 +35,17 @@ void handleButtonInput ()
   if (sortButtonPress.pressed)
   {
     sortButtonPress.pressed = false;
-    Serial.print("S");
+    DEBUG_PRINT("S");
   }
   if (longButtonPress.pressed)
   {
     longButtonPress.pressed = false;
-    Serial.print("L");
+    DEBUG_PRINT("L");
   }
   if (resetButtonPress.pressed)
   {
     resetButtonPress.pressed = false;
-    Serial.print("R");
+    DEBUG_PRINT("R");
     g_managedWiFi.manageWiFi(true);
   }
 }
@@ -83,8 +83,7 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis (); 
-  // ota update loop.
+  // Ota update loop.
   g_ota.loop (); 
 
 #if defined(DEBUG_TELNET)

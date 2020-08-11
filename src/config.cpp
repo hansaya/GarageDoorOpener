@@ -3,12 +3,17 @@
 #include "ArduinoJson.h"
 #include "debug.h"
 
-void Config::begin ()
+Config::Config ():
+  m_jsonConfig (256)
 {
   m_jsonConfig["mqtt_server"] = MQTT_BROKER;
   m_jsonConfig["mqtt_port"] = MQTT_PORT;
   m_jsonConfig["mqtt_user"] = MQTT_USERNAME;
   m_jsonConfig["mqtt_pass"] = MQTT_PASSWORD;
+}
+
+void Config::begin ()
+{
   readConfig ();
 }
 
@@ -61,7 +66,8 @@ void Config::readConfig ()
         }
       }
     }
-  } else {
+  } 
+  else {
     DEBUG_PRINTLN ("SPIFFS Mount failed. Formatting SPIFFS..");
     SPIFFS.begin(true);
     ESP.restart();

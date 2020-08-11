@@ -10,7 +10,7 @@
 class Config
 {
 public:
-    Config (): m_jsonConfig (256) {}
+    Config ();
     // Execute anything that belong in setup ()
     void begin ();
     // Save the config in flash.
