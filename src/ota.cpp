@@ -2,17 +2,19 @@
 #include <ArduinoOTA.h>
 #include "managed_wifi.h"
 #include "led.h"
+#include "debug.h"
 
 void Ota::begin ()
 {
     // Config OTA updates
     ArduinoOTA.onStart([]() {
         g_ota.m_firmwareUpdating = true;
-        g_led.BlinkLed ();
+        g_led.blinkLed ();
         DEBUG_PRINTLN("Start");
     });
     ArduinoOTA.onEnd([]() {
         g_ota.m_firmwareUpdating = false;
+        g_led.stopBlinkLed();
         DEBUG_PRINTLN("\nEnd");
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {

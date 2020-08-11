@@ -1,17 +1,14 @@
 #include <SPIFFS.h>
 #include "config.h"
 #include "ArduinoJson.h"
-
-// char* publisher::g_mqttServer;
-// char* publisher::g_mqttPort;
-// char* publisher::g_mqttSleepPeriod;
-// char* publisher::g_mqttSleepEn;
-DynamicJsonDocument Config::m_jsonConfig (256);
+#include "debug.h"
 
 void Config::begin ()
 {
   m_jsonConfig["mqtt_server"] = MQTT_BROKER;
   m_jsonConfig["mqtt_port"] = MQTT_PORT;
+  m_jsonConfig["mqtt_user"] = MQTT_USERNAME;
+  m_jsonConfig["mqtt_pass"] = MQTT_PASSWORD;
   readConfig ();
 }
 
@@ -19,19 +16,20 @@ void Config::begin ()
 void Config::saveConfig ()
 {
   m_shouldSaveConfig = true;
+  writeToMemory ();
 }
 
 // Saving the config to SPIFF
 void Config::writeToMemory () {
-  Serial.print("saving config :");
+  DEBUG_PRINT("saving config :");
 
   File configFile = SPIFFS.open("/config.json", "w+");
   if (!configFile) {
-    Serial.println("failed to open config file for writing");
+    DEBUG_PRINTLN("failed to open config file for writing");
   }
 
   serializeJson(m_jsonConfig, Serial);
-  Serial.println ();
+  DEBUG_PRINTLN ();
   serializeJson(m_jsonConfig, configFile);
   configFile.close();
   m_shouldSaveConfig = false;
@@ -53,18 +51,18 @@ void Config::readConfig ()
         DynamicJsonDocument json(size+1);
         DeserializationError error = deserializeJson(json, buf.get());
         if (!error) {
-          Serial.print("parsed json config: ");
+          DEBUG_PRINT("parsed json config: ");
           serializeJson(json, Serial);
-          Serial.println ();
+          DEBUG_PRINTLN ();
           m_jsonConfig = json;
         } else {
-          Serial.println("failed to load json config");
+          DEBUG_PRINTLN("failed to load json config");
           writeToMemory ();
         }
       }
     }
   } else {
-    Serial.println ("SPIFFS Mount failed. Formatting SPIFFS..");
+    DEBUG_PRINTLN ("SPIFFS Mount failed. Formatting SPIFFS..");
     SPIFFS.begin(true);
     ESP.restart();
   }

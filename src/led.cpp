@@ -2,11 +2,6 @@
 #include <Ticker.h>
 #include "user_config.h"
 
-void IRAM_ATTR LedCalllBack(bool blinkTwice)
-{
-    g_led.TheLight (blinkTwice);
-}
-
 void Led::begin ()
 {
     pinMode(STATUS_LED, OUTPUT);
@@ -15,12 +10,11 @@ void Led::begin ()
     FastLED.addLeds<NEOPIXEL, NEO_PIXEL_PIN>(m_leds, 1);
     FastLED.clear();
     FastLED.setBrightness(1);
-    m_leds[0] = CRGB::Green;
     FastLED.show();
 }
 
 // Blink the light
-void Led::TheLight (bool blinkTwice)
+void Led::changeLedState (bool blinkTwice)
 {
   if (blinkTwice)
   {
@@ -36,29 +30,35 @@ void Led::TheLight (bool blinkTwice)
 }
 
 // Bilnk twice to indicate successful mqtt call.
-void Led::DoubleFastBlink ()
+void Led::doubleFastBlink ()
 {
     digitalWrite(STATUS_LED, LOW);
-    m_lightTicker.attach(0.2, LedCalllBack, true);
+    m_lightTicker.attach_ms<Led*>(200, [](Led* led)
+    {
+        led->changeLedState (true);
+    }, this);
 }
 
-void Led::BlinkLed ()
+void Led::blinkLed ()
 {
-    m_lightTicker.attach(0.2, LedCalllBack, false);
+    m_lightTicker.attach_ms<Led*>(200, [](Led* led)
+    {
+        led->changeLedState (false);
+    }, this);
 }
 
-void Led::StopBlinkLed ()
+void Led::stopBlinkLed ()
 {
     digitalWrite(STATUS_LED, LOW);
     m_lightTicker.detach();
 }
 
-void Led::SetPixColor (CRGB color)
+void Led::setPixColor (CRGB color)
 {
     m_leds[0] = color; 
 }
 
-void Led::ShowPixColor ()
+void Led::showPixColor ()
 {
     FastLED.show();
 }

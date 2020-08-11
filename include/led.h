@@ -8,14 +8,22 @@
 class Led
 {
 public:
+    // Execute anything that belong in setup ().
     void begin ();
+    // logic that needs to run with loop.
     void loop ();
-    void TheLight (bool blinkTwice = false);
-    void DoubleFastBlink ();
-    void BlinkLed ();
-    void StopBlinkLed ();
-    void SetPixColor (CRGB color);
-    void ShowPixColor ();
+    // Change the led status.
+    void changeLedState (bool blinkTwice = false);
+    // Double blink the led once.
+    void doubleFastBlink ();
+    // Blink the led continuesly.
+    void blinkLed ();
+    // Stop the led blinking.
+    void stopBlinkLed ();
+    // Set the neo pixel color.
+    void setPixColor (CRGB color);
+    // Light up the neo pixel.
+    void showPixColor ();
 
 private:
     Ticker m_lightTicker;

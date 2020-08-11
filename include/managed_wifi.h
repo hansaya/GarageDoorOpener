@@ -9,20 +9,31 @@ class ManagedWiFi
 {
 public:
     ManagedWiFi ();
+    // Execute anything that belong in setup ()
     void begin ();
+    // Manage wifi portal
     void manageWiFi (bool reset_config = false);
-    static void event (WiFiEvent_t event);
-    static void configModeCallback (WiFiManager *myWiFiManager);
-    static void saveConfigCallback ();
+    // Get the hostname
     String getHostName ();
+    // Get the mac address as a string.
     String getMacStr ();
+    // Get the mac address in bytes.
     byte* getMac ();
-    bool wifiConnected ();
+    // Return true if connected to a device.
+    bool connected ();
 private:
-    static bool m_gotTheConfig;
+    // Wifi change event callback
+    void eventCallback (WiFiEvent_t event);
+    // Config mode callback
+    static void configModeCallback (WiFiManager *myWiFiManager);
+    // Save Config callback
+    static void saveConfigCallback ();
+
     String m_hostName;
     String m_macString;
     byte m_mac[7];
+    static bool m_gotTheConfig;
+    bool m_connected;
 };
 
 extern ManagedWiFi g_managedWiFi;

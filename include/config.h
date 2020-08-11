@@ -10,19 +10,20 @@
 class Config
 {
 public:
-    Config () {}
+    Config (): m_jsonConfig (256) {}
+    // Execute anything that belong in setup ()
     void begin ();
+    // Save the config in flash.
     void saveConfig ();
+    // Read the config file from from the flash.
     void readConfig ();
-    void writeToMemory ();
+    // Get the json config file.
     DynamicJsonDocument& getConfig ();
-
-    // static char *g_mqttServer;
-    // static char *g_mqttPort;
-    // static char *g_mqttSleepPeriod;
-    // static char *g_mqttSleepEn;
 private:
-    static DynamicJsonDocument m_jsonConfig;
+    // Write the config file to the memory.
+    void writeToMemory ();
+
+    DynamicJsonDocument m_jsonConfig;
     bool m_shouldSaveConfig;
 };
 

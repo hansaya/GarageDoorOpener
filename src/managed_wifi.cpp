@@ -2,12 +2,14 @@
 #include "managed_wifi.h"
 #include "config.h"
 #include "led.h"
+#include "debug.h"
 
-bool ManagedWiFi::m_gotTheConfig = true;
+bool ManagedWiFi::m_gotTheConfig = false;
 
 ManagedWiFi::ManagedWiFi ()
   : m_hostName("NA"),
-  m_macString ("NA")
+  m_macString ("NA"),
+  m_connected (false)
 {
   // Set the host name
   WiFi.macAddress(m_mac);
@@ -27,10 +29,16 @@ void ManagedWiFi::begin ()
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
 
+  //Set a call back to handle wifi events.
+  WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info)
+  {
+    this->eventCallback (event);
+  });
+
   // Connect to access point
-  WiFi.onEvent(ManagedWiFi::event);
   manageWiFi ();
 
+  // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(m_hostName.c_str());
@@ -44,7 +52,7 @@ void ManagedWiFi::configModeCallback (WiFiManager *myWiFiManager) {
   //if you used auto generated SSID, print it
   DEBUG_PRINTLN(myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
-  g_led.BlinkLed ();
+  g_led.blinkLed ();
 }
 
 // Call back for saving the config.
@@ -59,6 +67,8 @@ void ManagedWiFi::manageWiFi (bool reset_config)
   // The extra parameters to be configured (can be either global or just in the setup)
   WiFiManagerParameter customMqttServer("server", "MQTT server", g_config.getConfig()["mqtt_server"], 40);
   WiFiManagerParameter customMqttPort("port", "MQTT port", g_config.getConfig()["mqtt_port"], 6);
+  WiFiManagerParameter customMqttUser("user", "MQTT user", g_config.getConfig()["mqtt_user"], 20);
+  WiFiManagerParameter customMqttPass("pass", "MQTT pass", g_config.getConfig()["mqtt_pass"], 20);
 
   WiFiManager wifiManager;
   wifiManager.setConnectTimeout(60);
@@ -67,7 +77,9 @@ void ManagedWiFi::manageWiFi (bool reset_config)
   wifiManager.setMinimumSignalQuality(10);
   wifiManager.addParameter(&customMqttServer);
   wifiManager.addParameter(&customMqttPort);
-  wifiManager.setSaveConfigCallback(&saveConfigCallback);
+  wifiManager.addParameter(&customMqttUser);
+  wifiManager.addParameter(&customMqttPass);
+  wifiManager.setSaveConfigCallback(ManagedWiFi::saveConfigCallback);
   
   if (reset_config)
     wifiManager.startConfigPortal(CLIENT);
@@ -78,26 +90,31 @@ void ManagedWiFi::manageWiFi (bool reset_config)
   {
     g_config.getConfig()["mqtt_server"] = customMqttServer.getValue();
     g_config.getConfig()["mqtt_port"] = customMqttPort.getValue();
+    g_config.getConfig()["mqtt_user"] = customMqttUser.getValue();
+    g_config.getConfig()["mqtt_pass"] = customMqttPass.getValue();
 
     DEBUG_PRINT("mqtt server: ");
     DEBUG_PRINTLN(g_config.getConfig()["mqtt_server"].as<const char*>());
     g_config.saveConfig ();
   }
 
-  g_led.StopBlinkLed();
+  g_led.stopBlinkLed();
 }
 
 // Wifi status check
-void ManagedWiFi::event(WiFiEvent_t event) {
+void ManagedWiFi::eventCallback(WiFiEvent_t event) {
     DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
     switch(event) {
       case SYSTEM_EVENT_STA_GOT_IP:
-        // g_mqttTicker.attach(2, connectToMqtt);
-        // connectToMqtt ();
+        m_connected = true;
+        g_led.setPixColor (CRGB::Blue);
+        g_led.showPixColor();
         break;
       case SYSTEM_EVENT_STA_DISCONNECTED:
         DEBUG_PRINTLN("WiFi lost connection");
-        // g_mqttTicker.detach();
+        m_connected = false;
+        g_led.setPixColor (CRGB::Red);
+        g_led.showPixColor();
         break;
       default:
         break;
@@ -119,9 +136,9 @@ byte* ManagedWiFi::getMac ()
   return m_mac;
 }
 
-bool ManagedWiFi::wifiConnected ()
+bool ManagedWiFi::connected ()
 {
-  return WiFi.isConnected ();
+  return m_connected;
 }
 
 ManagedWiFi g_managedWiFi;

@@ -1,19 +1,9 @@
 #include "mqtt.h"
 #include "user_config.h"
 #include "managed_wifi.h"
-
-const char* mqtt_broker = MQTT_BROKER;
-const char* mqtt_clientId = CLIENT;
-const char* mqtt_username = MQTT_USERNAME;
-const char* mqtt_password = MQTT_PASSWORD;
-
-const char* birthMessage = "online";
-const char* lwtMessage = "offline";
-
-void onMqttMessage(char* topic, byte* payload, unsigned int length)
-{
-    g_mqtt.mqttCalllBack (topic, payload, length);
-}
+#include "config.h"
+#include "debug.h"
+#include "led.h"
 
 Mqtt::Mqtt ()
   : m_espClient(),
@@ -24,23 +14,41 @@ void Mqtt::begin ()
 {
     snprintf(m_uniqueId, 20, "%02X%02X", g_managedWiFi.getMac()[4], g_managedWiFi.getMac()[5]);
     snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+    snprintf(m_availHeader, 50, "%s/%s/avail", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
 
-    m_client.setServer(mqtt_broker, 1883);
-    m_client.setCallback(onMqttMessage);
+    const char* server = g_config.getConfig()["mqtt_server"];
+    const char* port = g_config.getConfig()["mqtt_port"];
+    m_client.setServer(server, atoi(port));
+    m_client.setCallback([this](char* topic, byte* payload, unsigned int length)
+    {
+      this->mqttCalllBack (topic, payload, length);
+    });
     m_client.setBufferSize(812);
+    connect ();
 }
 
 void Mqtt::loop ()
 {
   unsigned long currentMillis = millis ();  // Time now
   // Connect to MQTT server
-  if (!m_client.connected())
+  if (!m_client.connected() && g_managedWiFi.connected())
   {
     static unsigned long mqttConnectWaitPeriod;
     if (currentMillis - mqttConnectWaitPeriod >= 30000)
     {
       mqttConnectWaitPeriod = currentMillis;
       connect ();
+    }
+  }
+
+  // Publish availability every 10 minutes
+  if (m_client.connected())
+  {
+    static unsigned long aliveMessageResendPeriod;
+    if (currentMillis - aliveMessageResendPeriod >= 60*10*1000)
+    {
+      aliveMessageResendPeriod = currentMillis;
+      publishBirthMessage ();
     }
   }
   m_client.loop();
@@ -52,22 +60,16 @@ bool Mqtt::connected ()
 }
 
 // Function that publishes birthMessage
-void Mqtt::publishBirthMessage() {
-
-  char availabilityTopic[80];
-  snprintf(availabilityTopic, 80, "%s/avail", m_topicMQTTHeader);
-
+void Mqtt::publishBirthMessage() 
+{
   // Publish the birthMessage
   DEBUG_PRINT("Publishing birth message \"");
-  DEBUG_PRINT(birthMessage);
-  DEBUG_PRINT("\" to ");
-  DEBUG_PRINT(availabilityTopic);
-  DEBUG_PRINTLN("...");
-  m_client.publish(availabilityTopic, birthMessage, true);
+  publishToMQTT (m_availHeader, "online");
 }
 
 // Callback when MQTT message is received; calls triggerDoorAction(), passing topic and payload as parameters
-void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) {
+void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) 
+{
     DEBUG_PRINT("Message arrived [");
     DEBUG_PRINT(topic);
     DEBUG_PRINT("] ");
@@ -88,24 +90,21 @@ void Mqtt::mqttCalllBack(char* topic, byte* payload, unsigned int length) {
     }
 }
 
-void Mqtt::connect() {
+void Mqtt::connect() 
+{
   DEBUG_PRINT("Connecting to MQTT with client id ");
   String clientId = CLIENT;
   clientId += String(random(0xffff), HEX);
   DEBUG_PRINT(clientId);
   DEBUG_PRINTLN("...");
-  char availabilityTopic[80];
-  snprintf(availabilityTopic, 80, "%s/avail", m_topicMQTTHeader);
 
   // Attempt to connect
-  if (m_client.connect(clientId.c_str(), mqtt_username, mqtt_password, availabilityTopic, 0, true, "offline"))
+  if (m_client.connect(clientId.c_str(), g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, 0, true, "offline"))
   {
     publishBirthMessage();
     // Subscribe to the topics.
     for (int i=0; i<m_subTopicCnt; i++)
-    {
       subscribe (m_topics[i].c_str());
-    }
   }
   else
   {
@@ -116,12 +115,14 @@ void Mqtt::connect() {
 }
 
 // Publish the MQTT payload.
-void Mqtt::publishToMQTT(const char* p_topic,const char* p_payload) {
+void Mqtt::publishToMQTT(const char* p_topic, const char* p_payload) 
+{
   if (m_client.publish(p_topic, p_payload, true)) {
     DEBUG_PRINT(F("INFO: MQTT message published successfully, topic: "));
     DEBUG_PRINT(p_topic);
     DEBUG_PRINT(F(", payload: "));
     DEBUG_PRINTLN(p_payload);
+    g_led.doubleFastBlink ();
   } else {
     DEBUG_PRINTLN(F("ERROR: MQTT message not published, either connection lost, or message too large. Topic: "));
     DEBUG_PRINT(p_topic);

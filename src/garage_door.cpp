@@ -2,6 +2,7 @@
 #include "managed_wifi.h"
 #include "mqtt.h"
 #include <ArduinoJson.h>
+#include "debug.h"
 
 GarageDoor::GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin, String name) 
     : m_name (name),
@@ -20,7 +21,6 @@ void GarageDoor::loop ()
     if (!m_publishConfig && g_mqtt.connected ())
     {
         mqttAnnounce ();
-        g_mqtt.publishBirthMessage ();
         m_publishConfig = true;
     }
     if (m_sortInputTrigger.pressed == m_doorOpen)
@@ -100,7 +100,7 @@ void GarageDoor::mqttAnnounce ()
     root["~"] = m_topicMQTTHeader;
     root["uniq_id"] = m_id;
     root["name"] = m_name;
-    root["avty_t"] = "~/avail";
+    root["avty_t"] = g_mqtt.getAvailabilityTopic ();
     root["stat_t"] = "~/" + m_id + "/state";
     root["cmd_t"] = "~/" + m_id + "/cmd";
     root["val_tpl"] = "{{value_json.status}}";
@@ -135,5 +135,4 @@ void GarageDoor::publishStatus ()
     {
         DEBUG_PRINTLN("Cannot publish, not connected to MQTT server.");
     }
-    
 }

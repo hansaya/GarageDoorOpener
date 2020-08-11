@@ -8,7 +8,7 @@
 
 // For button events
 struct ButtonEvents {
-  const unsigned long minDuration; // This needs to higher than 100ms for events that are not triggering on release.
+  const unsigned long minDuration; // This needs to be higher than 100ms for events that are not triggering on release.
   bool pressed;
   bool triggerOnRelease; // This flag will turn on a ticker to check the input periodically.
 };
@@ -30,11 +30,13 @@ public:
   // Setup pin mode and interrupt
   void begin ()
   {
+    // Set up the pins
     if (!m_active)
       pinMode(m_pin, INPUT_PULLUP);
     else
       pinMode(m_pin, INPUT_PULLDOWN);
 
+    // Attach a interrupt to the pin
     attachInterrupt(m_pin, std::bind(&Button::readButton, this), CHANGE);
 
     // Attach a ticker to check the input for the non-human triggers. This will make sure to trigger an event for missed interrupts.
@@ -105,7 +107,6 @@ private:
     m_eventLength++;
   }
 
-  // For button inputs
   const uint16_t m_pin;
   bool m_pressed;
   ButtonEvents* m_events[N];
