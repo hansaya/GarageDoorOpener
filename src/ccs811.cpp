@@ -12,9 +12,8 @@ void CCS811::begin ()
     // Setup cc811 sensor
     pinMode(CCS811_WAKE, OUTPUT);
     digitalWrite(CCS811_WAKE, LOW);
-    if(!ccs.begin(0x5A)){
+    if(!ccs.begin(0x5A))
         DEBUG_PRINTLN("Failed to start CCS811 sensor! Please check your wiring.");
-    }
     else
         ccs.setTempOffset (14.0);
     digitalWrite(CCS811_WAKE, HIGH);
@@ -23,7 +22,6 @@ void CCS811::begin ()
 void CCS811::loop ()
 {
     unsigned long currentMillis = millis ();  // Time now
-
     if (!m_publishConfig && g_mqtt.connected ())
     {
         co2MqttAnnounce ();

@@ -114,8 +114,6 @@ private:
   const bool m_active;
   Ticker m_ticker;
   volatile unsigned long m_buttonCurrentHigh;
-  
-  
 };
 
 #endif

@@ -5,6 +5,7 @@
 void Led::begin ()
 {
     pinMode(STATUS_LED, OUTPUT);
+    digitalWrite(STATUS_LED, LOW);
 
     // setup fast led
     FastLED.addLeds<NEOPIXEL, NEO_PIXEL_PIN>(m_leds, 1);
@@ -13,7 +14,6 @@ void Led::begin ()
     FastLED.show();
 }
 
-// Blink the light
 void Led::changeLedState (bool blinkTwice)
 {
   if (blinkTwice)
@@ -29,7 +29,6 @@ void Led::changeLedState (bool blinkTwice)
   digitalWrite(STATUS_LED, !(digitalRead(STATUS_LED)));
 }
 
-// Bilnk twice to indicate successful mqtt call.
 void Led::doubleFastBlink ()
 {
     digitalWrite(STATUS_LED, LOW);
