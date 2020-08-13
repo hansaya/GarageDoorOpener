@@ -9,24 +9,25 @@
 class GarageDoor
 {
 public:
-    GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin, String name);
+    GarageDoor(String identification, uint16_t relayPin, uint16_t statusPin, String name);
     // Execute anything that belong in setup ()
-    void begin ();
+    void begin();
     // logic that needs to run with loop
-    void loop ();
+    void loop();
     // Open the garage door
-    void open ();
+    void open();
     // Close the garage door
-    void close ();
+    void close();
     // Indication as to garage door is open
-    bool opened ();
+    bool opened();
+
 private:
     // Announce the cover config to home assistant.
-    void mqttAnnounce ();
+    void mqttAnnounce();
     // Publish door status
-    void publishStatus ();
+    void publishStatus();
     // Subscribe to command topic
-    void triggerRelay ();
+    void triggerRelay();
 
     String m_name;
     Ticker m_ticker;

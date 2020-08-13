@@ -5,11 +5,11 @@
 #define DEBUG_TELNET
 
 // -- Project -------------------------------------------
-#define CLIENT "GarageDoorOpener"          // Client ID for the ESP
+#define CLIENT "GarageDoorOpener" // Client ID for the ESP
 
 // MQTT Parameters
 #define MQTT_BROKER "example.com"
-#define MQTT_PORT "1883"                // [MQTT] MQTT Port on the Server
+#define MQTT_PORT "1883" // [MQTT] MQTT Port on the Server
 #define MQTT_USERNAME ""
 #define MQTT_PASSWORD ""
 #define MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"

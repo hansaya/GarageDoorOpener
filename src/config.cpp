@@ -3,8 +3,7 @@
 #include "ArduinoJson.h"
 #include "debug.h"
 
-Config::Config ():
-  m_jsonConfig (256)
+Config::Config() : m_jsonConfig(256)
 {
   m_jsonConfig["mqtt_server"] = MQTT_BROKER;
   m_jsonConfig["mqtt_port"] = MQTT_PORT;
@@ -12,70 +11,79 @@ Config::Config ():
   m_jsonConfig["mqtt_pass"] = MQTT_PASSWORD;
 }
 
-void Config::begin ()
+void Config::begin()
 {
-  readConfig ();
+  readConfig();
 }
 
 // Save the config.
-void Config::saveConfig ()
+void Config::saveConfig()
 {
   m_shouldSaveConfig = true;
-  writeToMemory ();
+  writeToMemory();
 }
 
 // Saving the config to SPIFF
-void Config::writeToMemory () {
+void Config::writeToMemory()
+{
   DEBUG_PRINT("saving config :");
 
   File configFile = SPIFFS.open("/config.json", "w+");
-  if (!configFile) {
+  if (!configFile)
+  {
     DEBUG_PRINTLN("failed to open config file for writing");
   }
 
   serializeJson(m_jsonConfig, Serial);
-  DEBUG_PRINTLN ();
+  DEBUG_PRINTLN();
   serializeJson(m_jsonConfig, configFile);
   configFile.close();
   m_shouldSaveConfig = false;
 }
 
 // Reading the config from SPIFF
-void Config::readConfig ()
+void Config::readConfig()
 {
   // pass in true to format the SPIFFS
-  if (SPIFFS.begin()) {
-    if (SPIFFS.exists("/config.json")) {
+  if (SPIFFS.begin())
+  {
+    if (SPIFFS.exists("/config.json"))
+    {
       //file exists, reading and loading
       File configFile = SPIFFS.open("/config.json", "r+");
-      if (configFile) {
+      if (configFile)
+      {
         size_t size = configFile.size();
         // Allocate a buffer to store contents of the file.
         std::unique_ptr<char[]> buf(new char[size]);
         configFile.readBytes(buf.get(), size);
-        DynamicJsonDocument json(size+1);
+        DynamicJsonDocument json(size + 1);
         DeserializationError error = deserializeJson(json, buf.get());
-        if (!error) {
+        if (!error)
+        {
           DEBUG_PRINT("parsed json config: ");
           serializeJson(json, Serial);
-          DEBUG_PRINTLN ();
+          DEBUG_PRINTLN();
           m_jsonConfig = json;
-        } else {
+        }
+        else
+        {
           DEBUG_PRINTLN("failed to load json config");
-          writeToMemory ();
+          writeToMemory();
         }
       }
     }
-  } 
-  else {
-    DEBUG_PRINTLN ("SPIFFS Mount failed. Formatting SPIFFS..");
+  }
+  else
+  {
+    DEBUG_PRINTLN("SPIFFS Mount failed. Formatting SPIFFS..");
     SPIFFS.begin(true);
     ESP.restart();
   }
 }
 
 // Get config
-DynamicJsonDocument& Config::getConfig ()
+DynamicJsonDocument &Config::getConfig()
 {
   return m_jsonConfig;
 }

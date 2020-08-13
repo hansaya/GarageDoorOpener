@@ -19,18 +19,18 @@ GarageDoor leftDoor("LeftGarageDoor", DOOR1_RELAY_PIN, DOOR1_STATUS_PIN, DOOR1_A
 GarageDoor rightDoor("RightGarageDoor", DOOR3_RELAY_PIN, DOOR3_STATUS_PIN, DOOR3_ALIAS);
 
 // Setup a button with events.
-ButtonEvents sortButtonPress ({50, false, true});
-ButtonEvents longButtonPress ({800, false, true});
-ButtonEvents resetButtonPress ({6000, false, true});
-Button<3> gpio0Button (BUTTON, LOW, &sortButtonPress, &longButtonPress, &resetButtonPress);
+ButtonEvents sortButtonPress({50, false, true});
+ButtonEvents longButtonPress({800, false, true});
+ButtonEvents resetButtonPress({6000, false, true});
+Button<3> gpio0Button(BUTTON, LOW, &sortButtonPress, &longButtonPress, &resetButtonPress);
 
 #ifdef DEBUG_TELNET
-  WiFiServer telnetServer(DEBUG_TELNET_PORT);
-  WiFiClient telnetClient;
+WiFiServer telnetServer(DEBUG_TELNET_PORT);
+WiFiClient telnetClient;
 #endif
 
 // Handle button inputs
-void handleButtonInput ()
+void handleButtonInput()
 {
   if (sortButtonPress.pressed)
   {
@@ -50,19 +50,20 @@ void handleButtonInput ()
   }
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
   // Read the flash for the previous config
-  g_config.begin ();
+  g_config.begin();
   // Function button setup.
-  gpio0Button.begin ();
+  gpio0Button.begin();
   // Led Setup
-  g_led.begin ();
+  g_led.begin();
 
   DEBUG_PRINTLN("Starting GarHAge...");
 
   // Connect to access point
-  g_managedWiFi.begin ();
+  g_managedWiFi.begin();
 
   // Run the telnet server for debugging.
 #if defined(DEBUG_TELNET)
@@ -71,20 +72,21 @@ void setup() {
 #endif
 
   // Start the services.
-  g_ota.begin ();
-  g_mqtt.begin ();
-  leftDoor.begin ();
-  rightDoor.begin ();
-  g_ccs811.begin ();
+  g_ota.begin();
+  g_mqtt.begin();
+  leftDoor.begin();
+  rightDoor.begin();
+  g_ccs811.begin();
 
   // Shows a green color to indicate startup
-  g_led.setPixColor (CRGB::Green);
+  g_led.setPixColor(CRGB::Green);
   g_led.showPixColor();
 }
 
-void loop() {
+void loop()
+{
   // Ota update loop.
-  g_ota.loop (); 
+  g_ota.loop();
 
 #if defined(DEBUG_TELNET)
   // handle the Telnet connection
@@ -92,20 +94,19 @@ void loop() {
 #endif
 
   // routine functions.
-  if (!g_ota.busy () && g_managedWiFi.connected())
+  if (!g_ota.busy() && g_managedWiFi.connected())
   {
-    g_mqtt.loop ();
-    leftDoor.loop ();
-    rightDoor.loop ();
-    g_ccs811.loop ();
+    g_mqtt.loop();
+    leftDoor.loop();
+    rightDoor.loop();
+    g_ccs811.loop();
 
-    if (digitalRead (ISO_IN_PIN) == HIGH)
+    if (digitalRead(ISO_IN_PIN) == HIGH)
     {
-      g_led.setPixColor (CRGB::Purple);
+      g_led.setPixColor(CRGB::Purple);
       g_led.showPixColor();
     }
 
-    handleButtonInput ();
+    handleButtonInput();
   }
-
 }

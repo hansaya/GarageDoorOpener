@@ -2,7 +2,7 @@
 #include <Ticker.h>
 #include "user_config.h"
 
-void Led::begin ()
+void Led::begin()
 {
     pinMode(STATUS_LED, OUTPUT);
     digitalWrite(STATUS_LED, LOW);
@@ -14,50 +14,53 @@ void Led::begin ()
     FastLED.show();
 }
 
-void Led::changeLedState (bool blinkTwice)
+void IRAM_ATTR Led::changeLedState(uint16_t blinkCount)
 {
-  if (blinkTwice)
-  {
-    static short count;
-    if (count++ >= 2)
+    if (blinkCount != 0)
     {
-        count = 0;
-        m_lightTicker.detach();
-        digitalWrite(STATUS_LED, LOW);
+        static short count;
+        if (count++ > blinkCount)
+        {
+            count = 0;
+            m_lightTicker.detach();
+            digitalWrite(STATUS_LED, LOW);
+            return;
+        }
     }
-  }
-  digitalWrite(STATUS_LED, !(digitalRead(STATUS_LED)));
+    digitalWrite(STATUS_LED, !(digitalRead(STATUS_LED)));
 }
 
-void Led::doubleFastBlink ()
+void Led::doubleFastBlink()
 {
     digitalWrite(STATUS_LED, LOW);
-    m_lightTicker.attach_ms<Led*>(200, [](Led* led)
-    {
-        led->changeLedState (true);
-    }, this);
+    m_lightTicker.attach_ms<Led *>(
+        200, [](Led *led) {
+            led->changeLedState(2);
+        },
+        this);
 }
 
-void Led::blinkLed ()
+void Led::blinkLed()
 {
-    m_lightTicker.attach_ms<Led*>(200, [](Led* led)
-    {
-        led->changeLedState (false);
-    }, this);
+    m_lightTicker.attach_ms<Led *>(
+        200, [](Led *led) {
+            led->changeLedState();
+        },
+        this);
 }
 
-void Led::stopBlinkLed ()
+void Led::stopBlinkLed()
 {
     digitalWrite(STATUS_LED, LOW);
     m_lightTicker.detach();
 }
 
-void Led::setPixColor (CRGB color)
+void Led::setPixColor(CRGB color)
 {
-    m_leds[0] = color; 
+    m_leds[0] = color;
 }
 
-void Led::showPixColor ()
+void Led::showPixColor()
 {
     FastLED.show();
 }

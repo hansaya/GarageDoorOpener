@@ -6,15 +6,15 @@
 
 bool ManagedWiFi::m_gotTheConfig = false;
 
-ManagedWiFi::ManagedWiFi ()
-  : m_hostName("NA"),
-  m_macString ("NA"),
-  m_connected (false)
+ManagedWiFi::ManagedWiFi()
+    : m_hostName("NA"),
+      m_macString("NA"),
+      m_connected(false)
 {
   // Set the host name
   WiFi.macAddress(m_mac);
   m_mac[6] = '\0';
-  char hostname [24];
+  char hostname[24];
   snprintf(hostname, 24, "%s_%02X%02X", CLIENT, m_mac[4], m_mac[5]);
   m_hostName = hostname;
   char macAddress[24] = {'\0'};
@@ -22,7 +22,7 @@ ManagedWiFi::ManagedWiFi ()
   m_macString = macAddress;
 }
 
-void ManagedWiFi::begin ()
+void ManagedWiFi::begin()
 {
   DEBUG_PRINT("Mac address: ");
   DEBUG_PRINT(m_macString);
@@ -30,13 +30,12 @@ void ManagedWiFi::begin ()
   DEBUG_PRINTLN(m_hostName);
 
   //Set a call back to handle wifi events.
-  WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info)
-  {
-    this->eventCallback (event);
+  WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) {
+    this->eventCallback(event);
   });
 
   // Connect to access point
-  manageWiFi ();
+  manageWiFi();
 
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
@@ -46,23 +45,25 @@ void ManagedWiFi::begin ()
 }
 
 // Gets called when WiFiManager enters configuration mode
-void ManagedWiFi::configModeCallback (WiFiManager *myWiFiManager) {
+void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
+{
   DEBUG_PRINTLN("Entered config mode");
   DEBUG_PRINTLN(WiFi.softAPIP());
   //if you used auto generated SSID, print it
   DEBUG_PRINTLN(myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
-  g_led.blinkLed ();
+  g_led.blinkLed();
 }
 
 // Call back for saving the config.
-void ManagedWiFi::saveConfigCallback () {
+void ManagedWiFi::saveConfigCallback()
+{
   DEBUG_PRINTLN("Should save config");
   m_gotTheConfig = true;
 }
 
 // Manages wifi portal
-void ManagedWiFi::manageWiFi (bool reset_config)
+void ManagedWiFi::manageWiFi(bool reset_config)
 {
   // The extra parameters to be configured (can be either global or just in the setup)
   WiFiManagerParameter customMqttServer("server", "MQTT server", g_config.getConfig()["mqtt_server"], 40);
@@ -80,7 +81,7 @@ void ManagedWiFi::manageWiFi (bool reset_config)
   wifiManager.addParameter(&customMqttUser);
   wifiManager.addParameter(&customMqttPass);
   wifiManager.setSaveConfigCallback(ManagedWiFi::saveConfigCallback);
-  
+
   if (reset_config)
     wifiManager.startConfigPortal(CLIENT);
   else
@@ -94,49 +95,51 @@ void ManagedWiFi::manageWiFi (bool reset_config)
     g_config.getConfig()["mqtt_pass"] = customMqttPass.getValue();
 
     DEBUG_PRINT("mqtt server: ");
-    DEBUG_PRINTLN(g_config.getConfig()["mqtt_server"].as<const char*>());
-    g_config.saveConfig ();
+    DEBUG_PRINTLN(g_config.getConfig()["mqtt_server"].as<const char *>());
+    g_config.saveConfig();
   }
 
   g_led.stopBlinkLed();
 }
 
 // Wifi status check
-void ManagedWiFi::eventCallback(WiFiEvent_t event) {
-    DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
-    switch(event) {
-      case SYSTEM_EVENT_STA_GOT_IP:
-        m_connected = true;
-        g_led.setPixColor (CRGB::Blue);
-        g_led.showPixColor();
-        break;
-      case SYSTEM_EVENT_STA_DISCONNECTED:
-        DEBUG_PRINTLN("WiFi lost connection");
-        m_connected = false;
-        g_led.setPixColor (CRGB::Red);
-        g_led.showPixColor();
-        break;
-      default:
-        break;
-    }
+void ManagedWiFi::eventCallback(WiFiEvent_t event)
+{
+  DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
+  switch (event)
+  {
+  case SYSTEM_EVENT_STA_GOT_IP:
+    m_connected = true;
+    g_led.setPixColor(CRGB::Blue);
+    g_led.showPixColor();
+    break;
+  case SYSTEM_EVENT_STA_DISCONNECTED:
+    DEBUG_PRINTLN("WiFi lost connection");
+    m_connected = false;
+    g_led.setPixColor(CRGB::Red);
+    g_led.showPixColor();
+    break;
+  default:
+    break;
+  }
 }
 
-String ManagedWiFi::getHostName ()
+String ManagedWiFi::getHostName()
 {
   return m_hostName;
 }
 
-String ManagedWiFi::getMacStr ()
+String ManagedWiFi::getMacStr()
 {
   return m_macString;
 }
 
-byte* ManagedWiFi::getMac ()
+byte *ManagedWiFi::getMac()
 {
   return m_mac;
 }
 
-bool ManagedWiFi::connected ()
+bool ManagedWiFi::connected()
 {
   return m_connected;
 }

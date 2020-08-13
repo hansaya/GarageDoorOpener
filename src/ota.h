@@ -6,13 +6,14 @@
 class Ota
 {
 public:
-    Ota () : m_firmwareUpdating(false) {};
+    Ota() : m_firmwareUpdating(false){};
     // Execute anything that belong in setup ().
-    void begin ();
+    void begin();
     // logic that needs to run with loop.
-    void loop ();
+    void loop();
     // Return true if OTA is busy.
-    bool busy () { return m_firmwareUpdating; }
+    bool busy() { return m_firmwareUpdating; }
+
 private:
     bool m_firmwareUpdating;
 };

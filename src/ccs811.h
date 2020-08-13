@@ -7,19 +7,20 @@
 class CCS811
 {
 public:
-    CCS811 (): m_notFound(true), m_publishConfig(false) {};
+    CCS811() : m_notFound(true), m_publishConfig(false){};
     // Execute anything that belong in setup ().
-    void begin ();
+    void begin();
     // logic that needs to run with loop.
-    void loop ();
+    void loop();
     // Publish sensor data to mqtt server
-    void publish ();
+    void publish();
+
 private:
     // Announce home assistant autodiscovery config.
-    void mqttAnnounce ();
-    void co2MqttAnnounce ();
-    void vocMqttAnnounce ();
-    void tempMqttAnnounce ();
+    void mqttAnnounce();
+    void co2MqttAnnounce();
+    void vocMqttAnnounce();
+    void tempMqttAnnounce();
 
     bool m_notFound;
     char m_topicMQTTHeader[50];

@@ -7,28 +7,29 @@
 #include "user_config.h"
 
 // For button events
-struct ButtonEvents {
+struct ButtonEvents
+{
   const unsigned long minDuration; // This needs to be higher than 100ms for events that are not triggering on release.
   bool pressed;
   bool triggerOnRelease; // This flag will turn on a ticker to check the input periodically.
 };
 
+// Button class. Template needs to be set to reflect the size of events.
 template <int N>
 class Button
 {
 public:
-  template<typename... Args>
-  Button (uint16_t pin, bool active, Args ... events):
-    m_pin (pin),
-    m_pressed (false),
-    m_active (active)
+  template <typename... Args>
+  Button(uint16_t pin, bool active, Args... events) : m_pin(pin),
+                                                      m_pressed(false),
+                                                      m_active(active)
   {
     // Add events recursively.
-    addEvents (events...);
+    addEvents(events...);
   }
 
   // Setup pin mode and interrupt
-  void begin ()
+  void begin()
   {
     // Set up the pins
     if (!m_active)
@@ -40,24 +41,26 @@ public:
     attachInterrupt(m_pin, std::bind(&Button::readButton, this), CHANGE);
 
     // Attach a ticker to check the input for the non-human triggers. This will make sure to trigger an event for missed interrupts.
-    for (int i=m_eventLength; i>0; i--)
+    for (int i = m_eventLength; i > 0; i--)
     {
-      if (!m_events[i-1]->triggerOnRelease)
+      if (!m_events[i - 1]->triggerOnRelease)
       {
-        m_ticker.attach_ms<Button<N>*>(100, [](Button* button) {
-          // Force check the input every 100ms to avoid interrupt issues.
-          button->readButton();
-          for (int i=button->m_eventLength; i>0; i--)
-          {
-            if (!button->m_events[i-1]->triggerOnRelease)
-            {
-              if (button->m_pressed && (millis() - button->m_buttonCurrentHigh) > button->m_events[i-1]->minDuration)
-                button->m_events[i-1]->pressed=true;
-              else if(!button->m_pressed)
-                button->m_events[i-1]->pressed=false;
-            }
-          }
-        }, this);
+        m_ticker.attach_ms<Button<N> *>(
+            100, [](Button *button) {
+              // Force check the input every 100ms to avoid interrupt issues.
+              button->readButton();
+              for (int i = button->m_eventLength; i > 0; i--)
+              {
+                if (!button->m_events[i - 1]->triggerOnRelease)
+                {
+                  if (button->m_pressed && (millis() - button->m_buttonCurrentHigh) > button->m_events[i - 1]->minDuration)
+                    button->m_events[i - 1]->pressed = true;
+                  else if (!button->m_pressed)
+                    button->m_events[i - 1]->pressed = false;
+                }
+              }
+            },
+            this);
       }
     }
   }
@@ -66,7 +69,7 @@ public:
   void IRAM_ATTR readButton()
   {
     // Input got triggered.
-    if (digitalRead (m_pin) == m_active && !m_pressed)
+    if (digitalRead(m_pin) == m_active && !m_pressed)
     {
       // Note the time the input was triggered.
       m_buttonCurrentHigh = millis();
@@ -74,34 +77,34 @@ public:
       return;
     }
     // Input released.
-    if (digitalRead (m_pin) == !m_active && m_pressed)
+    if (digitalRead(m_pin) == !m_active && m_pressed)
     {
       m_pressed = false;
-      for (int i=m_eventLength; i>0; i--)
+      for (int i = m_eventLength; i > 0; i--)
       {
         // If the input was held down long enough, trigger the event.
-        if (m_events[i-1]->triggerOnRelease && (millis() - m_buttonCurrentHigh) > m_events[i-1]->minDuration)
+        if (m_events[i - 1]->triggerOnRelease && (millis() - m_buttonCurrentHigh) > m_events[i - 1]->minDuration)
         {
-          m_events[i-1]->pressed=true;
+          m_events[i - 1]->pressed = true;
           break;
         }
       }
     }
   }
-    
+
 private:
   // Add events
-  template<class T, typename ...Rest>
-  void addEvents (T event, Rest... rest)
+  template <class T, typename... Rest>
+  void addEvents(T event, Rest... rest)
   {
     m_events[m_eventLength] = event;
     m_eventLength++;
-    addEvents (rest...);
+    addEvents(rest...);
   }
 
   // Add events
-  template<typename Arg>
-  void addEvents (Arg event)
+  template <typename Arg>
+  void addEvents(Arg event)
   {
     m_events[m_eventLength] = event;
     m_eventLength++;
@@ -109,7 +112,7 @@ private:
 
   const uint16_t m_pin;
   bool m_pressed;
-  ButtonEvents* m_events[N];
+  ButtonEvents *m_events[N];
   int m_eventLength;
   const bool m_active;
   Ticker m_ticker;

@@ -4,23 +4,24 @@
 #include <ArduinoJson.h>
 #include "debug.h"
 
-GarageDoor::GarageDoor (String identification, uint16_t relayPin, uint16_t statusPin, String name) 
-    : m_name (name),
-    m_id (identification),
-    m_relayPin (relayPin),
-    m_statusPin (statusPin),
-    m_publishConfig (false),
-    m_doorOpen (false),
-    m_sortInputTrigger ({50, false, false}),
-    m_sensor (statusPin, ACTIVE_HIGH_DOOR_SENSOR, &m_sortInputTrigger),
-    m_event (false)
-{}
-
-void GarageDoor::loop ()
+GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t statusPin, String name)
+    : m_name(name),
+      m_id(identification),
+      m_relayPin(relayPin),
+      m_statusPin(statusPin),
+      m_publishConfig(false),
+      m_doorOpen(false),
+      m_sortInputTrigger({50, false, false}),
+      m_sensor(statusPin, ACTIVE_HIGH_DOOR_SENSOR, &m_sortInputTrigger),
+      m_event(false)
 {
-    if (!m_publishConfig && g_mqtt.connected ())
+}
+
+void GarageDoor::loop()
+{
+    if (!m_publishConfig && g_mqtt.connected())
     {
-        mqttAnnounce ();
+        mqttAnnounce();
         m_publishConfig = true;
     }
     if (m_sortInputTrigger.pressed == m_doorOpen)
@@ -28,84 +29,86 @@ void GarageDoor::loop ()
         m_doorOpen = !m_sortInputTrigger.pressed;
         m_event = true;
     }
-    if (m_event && g_mqtt.connected ())
+    if (m_event && g_mqtt.connected())
     {
         m_event = false;
-        publishStatus ();
+        publishStatus();
     }
 }
 
-void GarageDoor::begin ()
+void GarageDoor::begin()
 {
-    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName ().c_str ());
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
     pinMode(m_relayPin, OUTPUT);
 
-    m_sensor.begin ();
+    m_sensor.begin();
 
     // Setup a call back function to handle commands.
     char cmdTopic[80];
-    snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str ());
-    g_mqtt.subscribe (cmdTopic, [this](String payload) {
+    snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str());
+    g_mqtt.subscribe(cmdTopic, [this](String payload) {
         DEBUG_PRINTLN(payload);
         if (payload == "OPEN")
         {
-            this->open ();
+            this->open();
         }
-        else if(payload == "CLOSE")
+        else if (payload == "CLOSE")
         {
-            this->close ();
+            this->close();
         }
-        else if(payload == "STOP")
+        else if (payload == "STOP")
         {
-            this->publishStatus ();
+            this->publishStatus();
         }
     });
 }
 
-void GarageDoor::open ()
+void GarageDoor::open()
 {
     // Sensor only triggered when door is closed so we can use it to trigger if the door is down.
     if (!m_doorOpen)
-        triggerRelay ();
+        triggerRelay();
 }
 
-void GarageDoor::close ()
+void GarageDoor::close()
 {
     // Sensor only triggered when door is closed so we can use it not trigger if the door is down.
     if (m_doorOpen)
-        triggerRelay ();
+        triggerRelay();
 }
 
-bool GarageDoor::opened ()
+bool GarageDoor::opened()
 {
     return m_doorOpen;
 }
 
-void GarageDoor::triggerRelay ()
+void GarageDoor::triggerRelay()
 {
     // Turn on the relay and let the ticker turn it off after 400ms
-    digitalWrite (m_relayPin, ACTIVE_HIGH_RELAY);
-    m_ticker.once_ms<uint16_t>(400, [](uint16_t pin) {
-        DEBUG_PRINTLN("Relay triggered for 400ms");
-        digitalWrite (pin, !ACTIVE_HIGH_RELAY);
-    }, m_relayPin);
+    digitalWrite(m_relayPin, ACTIVE_HIGH_RELAY);
+    m_ticker.once_ms<uint16_t>(
+        400, [](uint16_t pin) {
+            DEBUG_PRINTLN("Relay triggered for 400ms");
+            digitalWrite(pin, !ACTIVE_HIGH_RELAY);
+        },
+        m_relayPin);
 }
 
-void GarageDoor::mqttAnnounce ()
+void GarageDoor::mqttAnnounce()
 {
     char statusDiscoverTopic[80];
-    snprintf(statusDiscoverTopic, 80, "%s/%s/config", m_topicMQTTHeader, m_id.c_str ());
+    snprintf(statusDiscoverTopic, 80, "%s/%s/config", m_topicMQTTHeader, m_id.c_str());
 
     StaticJsonDocument<500> root;
     root["~"] = m_topicMQTTHeader;
     root["uniq_id"] = m_id;
     root["name"] = m_name;
-    root["avty_t"] = g_mqtt.getAvailabilityTopic ();
+    root["avty_t"] = g_mqtt.getAvailabilityTopic();
     root["stat_t"] = "~/" + m_id + "/state";
     root["cmd_t"] = "~/" + m_id + "/cmd";
     root["val_tpl"] = "{{value_json.status}}";
-    root["device"]["ids"] = g_mqtt.getUniqueId ();
-    root["device"]["name"] = g_managedWiFi.getHostName ().c_str ();
+    root["device"]["ids"] = g_mqtt.getUniqueId();
+    root["device"]["name"] = g_managedWiFi.getHostName().c_str();
     root["device"]["mf"] = "DIY";
     root["device"]["mdl"] = "DIY";
     root["device"]["sw"] = "1.1";
@@ -114,12 +117,12 @@ void GarageDoor::mqttAnnounce ()
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
 }
 
-void GarageDoor::publishStatus ()
+void GarageDoor::publishStatus()
 {
-    if (g_mqtt.connected ())
+    if (g_mqtt.connected())
     {
         char statusTopic[80];
-        snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id.c_str ());
+        snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id.c_str());
 
         StaticJsonDocument<100> json;
         if (m_doorOpen)
