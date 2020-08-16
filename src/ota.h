@@ -12,7 +12,7 @@ public:
     // logic that needs to run with loop.
     void loop();
     // Return true if OTA is busy.
-    bool busy() { return m_firmwareUpdating; }
+    const bool busy() const { return m_firmwareUpdating; }
 
 private:
     bool m_firmwareUpdating;

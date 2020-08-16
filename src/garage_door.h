@@ -19,13 +19,13 @@ public:
     // Close the garage door
     void close();
     // Indication as to garage door is open
-    bool opened();
+    bool opened() const;
 
 private:
     // Announce the cover config to home assistant.
-    void mqttAnnounce();
+    void mqttAnnounce() const;
     // Publish door status
-    void publishStatus();
+    void publishStatus() const;
     // Subscribe to command topic
     void triggerRelay();
 

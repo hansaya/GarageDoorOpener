@@ -60,7 +60,7 @@ void Led::setPixColor(CRGB color)
     m_leds[0] = color;
 }
 
-void Led::showPixColor()
+void Led::showPixColor() const
 {
     FastLED.show();
 }

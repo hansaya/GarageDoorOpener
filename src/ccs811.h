@@ -17,10 +17,10 @@ public:
 
 private:
     // Announce home assistant autodiscovery config.
-    void mqttAnnounce();
-    void co2MqttAnnounce();
-    void vocMqttAnnounce();
-    void tempMqttAnnounce();
+    void mqttAnnounce() const;
+    void co2MqttAnnounce() const;
+    void vocMqttAnnounce() const;
+    void tempMqttAnnounce() const;
 
     bool m_notFound;
     char m_topicMQTTHeader[50];

@@ -19,16 +19,19 @@ GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t status
 
 void GarageDoor::loop()
 {
+    // Publish auto discovery home assistant config. This is only needed for very first initialization.
     if (!m_publishConfig && g_mqtt.connected())
     {
         mqttAnnounce();
         m_publishConfig = true;
     }
+    // Keep track of the door sensor.
     if (m_sortInputTrigger.pressed == m_doorOpen)
     {
         m_doorOpen = !m_sortInputTrigger.pressed;
         m_event = true;
     }
+    // Publish any changes to mqtt server.
     if (m_event && g_mqtt.connected())
     {
         m_event = false;
@@ -77,7 +80,7 @@ void GarageDoor::close()
         triggerRelay();
 }
 
-bool GarageDoor::opened()
+bool GarageDoor::opened() const
 {
     return m_doorOpen;
 }
@@ -94,7 +97,7 @@ void GarageDoor::triggerRelay()
         m_relayPin);
 }
 
-void GarageDoor::mqttAnnounce()
+void GarageDoor::mqttAnnounce() const
 {
     char statusDiscoverTopic[80];
     snprintf(statusDiscoverTopic, 80, "%s/%s/config", m_topicMQTTHeader, m_id.c_str());
@@ -117,7 +120,7 @@ void GarageDoor::mqttAnnounce()
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
 }
 
-void GarageDoor::publishStatus()
+void GarageDoor::publishStatus() const
 {
     if (g_mqtt.connected())
     {

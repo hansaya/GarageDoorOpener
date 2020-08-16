@@ -27,7 +27,6 @@
 #define SDA_CUSTOM_PIN 22
 #define CCS811_WAKE 13
 #define CCS811_RST 14
-#define CCS811_RST 15
 
 // Relay Parameters
 #define ACTIVE_HIGH_RELAY true

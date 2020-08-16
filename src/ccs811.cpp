@@ -22,6 +22,7 @@ void CCS811::begin()
 void CCS811::loop()
 {
     unsigned long currentMillis = millis(); // Time now
+    // Publish auto discovery home assistant config. This is only needed for very first initialization.
     if (!m_publishConfig && g_mqtt.connected())
     {
         co2MqttAnnounce();
@@ -66,7 +67,7 @@ void CCS811::publish()
     digitalWrite(CCS811_WAKE, HIGH);
 }
 
-void CCS811::co2MqttAnnounce()
+void CCS811::co2MqttAnnounce() const
 {
     char statusDiscoverTopic[80];
     snprintf(statusDiscoverTopic, 80, "%s/co2/config", m_topicMQTTHeader);
@@ -92,7 +93,7 @@ void CCS811::co2MqttAnnounce()
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
 }
 
-void CCS811::vocMqttAnnounce()
+void CCS811::vocMqttAnnounce() const
 {
     char statusDiscoverTopic[80];
     snprintf(statusDiscoverTopic, 80, "%s/voc/config", m_topicMQTTHeader);
@@ -118,7 +119,7 @@ void CCS811::vocMqttAnnounce()
     g_mqtt.publishToMQTT(statusDiscoverTopic, outgoingJsonBuffer);
 }
 
-void CCS811::tempMqttAnnounce()
+void CCS811::tempMqttAnnounce() const
 {
     char statusDiscoverTopic[80];
     snprintf(statusDiscoverTopic, 80, "%s/temp/config", m_topicMQTTHeader);

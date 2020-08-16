@@ -24,7 +24,8 @@ void Mqtt::begin()
     this->mqttCalllBack(topic, payload, length);
   });
   m_client.setBufferSize(812);
-  connect();
+  if (g_managedWiFi.connected())
+    connect();
 }
 
 void Mqtt::loop()
@@ -42,19 +43,19 @@ void Mqtt::loop()
   }
 
   // Publish availability every 10 minutes
-  if (m_client.connected())
-  {
-    static unsigned long aliveMessageResendPeriod;
-    if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
-    {
-      aliveMessageResendPeriod = currentMillis;
-      publishBirthMessage();
-    }
-  }
+  // if (m_client.connected())
+  // {
+  //   static unsigned long aliveMessageResendPeriod;
+  //   if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
+  //   {
+  //     aliveMessageResendPeriod = currentMillis;
+  //     publishBirthMessage();
+  //   }
+  // }
   m_client.loop();
 }
 
-bool Mqtt::connected()
+const bool Mqtt::connected()
 {
   return m_client.connected();
 }
@@ -73,7 +74,7 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
   DEBUG_PRINT("Message arrived [");
   DEBUG_PRINT(topic);
   DEBUG_PRINT("] ");
-  for (int i = 0; i < length; i++)
+  for (unsigned int i = 0; i < length; i++)
   {
     DEBUG_PRINT((char)payload[i]);
   }

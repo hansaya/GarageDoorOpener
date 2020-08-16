@@ -63,7 +63,7 @@ void ManagedWiFi::saveConfigCallback()
 }
 
 // Manages wifi portal
-void ManagedWiFi::manageWiFi(bool reset_config)
+void ManagedWiFi::manageWiFi(const bool reset_config)
 {
   // The extra parameters to be configured (can be either global or just in the setup)
   WiFiManagerParameter customMqttServer("server", "MQTT server", g_config.getConfig()["mqtt_server"], 40);
@@ -103,7 +103,7 @@ void ManagedWiFi::manageWiFi(bool reset_config)
 }
 
 // Wifi status check
-void ManagedWiFi::eventCallback(WiFiEvent_t event)
+void ManagedWiFi::eventCallback(const WiFiEvent_t event)
 {
   DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
   switch (event)
@@ -124,22 +124,22 @@ void ManagedWiFi::eventCallback(WiFiEvent_t event)
   }
 }
 
-String ManagedWiFi::getHostName()
+String ManagedWiFi::getHostName() const
 {
   return m_hostName;
 }
 
-String ManagedWiFi::getMacStr()
+String ManagedWiFi::getMacStr() const
 {
   return m_macString;
 }
 
-byte *ManagedWiFi::getMac()
+byte* ManagedWiFi::getMac()
 {
   return m_mac;
 }
 
-bool ManagedWiFi::connected()
+bool ManagedWiFi::connected() const
 {
   return m_connected;
 }

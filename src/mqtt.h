@@ -2,10 +2,9 @@
 #define mqtt_h
 
 #define CALL_BACK_LIMIT 5
-
-#include <functional>
 #define TOPIC_CALLBACK_SIGNATURE std::function<void(String)>
 
+#include <functional>
 #include <PubSubClient.h>
 #include <wifi.h>
 #include <Arduino.h>
@@ -19,15 +18,15 @@ public:
     // logic that needs to run with loop
     void loop();
     // Return true if connectecd to MQTT server
-    bool connected();
+    const bool connected();
     // Publish a message to MQTT server.
     void publishToMQTT(const char *p_topic, const char *p_payload);
     // Get the unique id.
-    char *getUniqueId() { return m_uniqueId; }
+    const char *getUniqueId() const { return m_uniqueId; }
     // Set a call back for subscribed topics.
     void subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback);
     // Get availability header.
-    char *getAvailabilityTopic() { return m_availHeader; }
+    const char *getAvailabilityTopic() const { return m_availHeader; }
 
 private:
     // Subscribe to a topic

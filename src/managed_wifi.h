@@ -12,19 +12,19 @@ public:
     // Execute anything that belong in setup ()
     void begin();
     // Manage wifi portal
-    void manageWiFi(bool reset_config = false);
+    void manageWiFi(const bool reset_config = false);
     // Get the hostname
-    String getHostName();
+    String getHostName() const;
     // Get the mac address as a string.
-    String getMacStr();
+    String getMacStr() const;
     // Get the mac address in bytes.
     byte *getMac();
     // Return true if connected to a device.
-    bool connected();
+    bool connected() const;
 
 private:
     // Wifi change event callback
-    void eventCallback(WiFiEvent_t event);
+    void eventCallback(const WiFiEvent_t event);
     // Config mode callback
     static void configModeCallback(WiFiManager *myWiFiManager);
     // Save Config callback

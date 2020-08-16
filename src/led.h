@@ -10,8 +10,6 @@ class Led
 public:
     // Execute anything that belong in setup ().
     void begin();
-    // logic that needs to run with loop.
-    void loop();
     // Double blink the led once.
     void doubleFastBlink();
     // Blink the led continuesly.
@@ -21,7 +19,7 @@ public:
     // Set the neo pixel color.
     void setPixColor(CRGB color);
     // Light up the neo pixel.
-    void showPixColor();
+    void showPixColor() const;
 
 private:
     // Change the led status.
