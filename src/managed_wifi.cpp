@@ -43,8 +43,8 @@ void ManagedWiFi::begin()
 
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
 #ifdef ESP32
+  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(m_hostName.c_str());
 #else
   WiFi.hostname(m_hostName);

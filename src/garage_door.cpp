@@ -111,7 +111,7 @@ void GarageDoor::mqttAnnounce() const
     root["cmd_t"] = "~/" + m_id + "/cmd";
     root["val_tpl"] = "{{value_json.status}}";
     root["device"]["ids"] = g_mqtt.getUniqueId();
-    root["device"]["name"] = g_managedWiFi.getHostName().c_str();
+    root["device"]["name"] = g_managedWiFi.getHostName();
     root["device"]["mf"] = "DIY";
     root["device"]["mdl"] = "DIY";
     root["device"]["sw"] = "1.1";

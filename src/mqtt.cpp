@@ -17,11 +17,20 @@ void Mqtt::begin()
   snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
   snprintf(m_availHeader, 50, "%s/%s/avail", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
 
+  // Set the random seed for client id.
+  randomSeed(analogRead(0));
+
+  // Set the server settings
   m_client.setServer(g_config.getConfig()["mqtt_server"].as<const char *>(), atoi(g_config.getConfig()["mqtt_port"].as<const char *>()));
+
+  // Call back for MQTT subs
   m_client.setCallback([this](char *topic, byte *payload, unsigned int length) {
     this->mqttCalllBack(topic, payload, length);
   });
+
+  // Set the buffer size for json payload
   m_client.setBufferSize(812);
+
   if (g_managedWiFi.connected())
     connect();
 }
@@ -110,7 +119,7 @@ void Mqtt::connect()
   {
     DEBUG_PRINT("Failed to connect to MQTT! ");
     DEBUG_PRINT(m_client.state());
-    DEBUG_PRINTLN(" Trying again in 60 seconds");
+    DEBUG_PRINTLN(" Trying again in 30 seconds");
   }
 }
 
