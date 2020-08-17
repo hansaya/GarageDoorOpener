@@ -14,11 +14,13 @@
   #define DEBUG_PRINT_WITH_FMT(x, fmt) telnetClient.printf(x, fmt)
   #define DEBUG_PRINTLN(x) telnetClient.println(x)
   #define DEBUG_PRINTLN_WITH_FMT(x, fmt) telnetClient.println(x, fmt)
+  #define DEBUG_STREAM telnetClient
 #elif defined(DEBUG_SERIAL)
   #define DEBUG_PRINT(x) Serial.print(x)
   #define DEBUG_PRINT_WITH_FMT(x, fmt) Serial.printf(x, fmt)
   #define DEBUG_PRINTLN(x) Serial.println(x)
   #define DEBUG_PRINTLN_WITH_FMT(x, fmt) Serial.println(x, fmt)
+  #define DEBUG_STREAM Serial
 #else
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINT_WITH_FMT(x, fmt)

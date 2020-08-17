@@ -1,4 +1,8 @@
+#ifdef ESP32
 #include <ESPmDNS.h>
+#else
+#include <ESP8266mDNS.h>
+#endif
 #include "managed_wifi.h"
 #include "config.h"
 #include "led.h"
@@ -40,7 +44,11 @@ void ManagedWiFi::begin()
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
+#ifdef ESP32
   WiFi.setHostname(m_hostName.c_str());
+#else
+  WiFi.hostname(m_hostName);
+#endif
   WiFi.mode(WIFI_STA);
 }
 
@@ -97,6 +105,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
     DEBUG_PRINT("mqtt server: ");
     DEBUG_PRINTLN(g_config.getConfig()["mqtt_server"].as<const char *>());
     g_config.saveConfig();
+    ESP.restart();
   }
 
   g_led.stopBlinkLed();

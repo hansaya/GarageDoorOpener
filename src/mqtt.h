@@ -6,7 +6,11 @@
 
 #include <functional>
 #include <PubSubClient.h>
+#ifdef ESP32
 #include <wifi.h>
+#else
+#include <ESP8266WiFi.h>
+#endif
 #include <Arduino.h>
 
 class Mqtt

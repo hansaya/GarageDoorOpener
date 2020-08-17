@@ -1,9 +1,14 @@
+#ifdef ESP32
 #include <SPIFFS.h>
+#else
+#include <FS.h>
+#endif
 #include "config.h"
 #include "ArduinoJson.h"
 #include "debug.h"
+#include "user_config.h"
 
-Config::Config() : m_jsonConfig(256)
+Config::Config() : m_jsonConfig(JSON_OBJECT_SIZE(4) + CONFIG_SIZE_LIMIT)
 {
   m_jsonConfig["mqtt_server"] = MQTT_BROKER;
   m_jsonConfig["mqtt_port"] = MQTT_PORT;
@@ -26,15 +31,13 @@ void Config::saveConfig()
 // Saving the config to SPIFF
 void Config::writeToMemory()
 {
-  DEBUG_PRINT("saving config :");
+  DEBUG_PRINT("Saving config :");
 
   File configFile = SPIFFS.open("/config.json", "w+");
   if (!configFile)
-  {
     DEBUG_PRINTLN("failed to open config file for writing");
-  }
 
-  serializeJson(m_jsonConfig, Serial);
+  serializeJson(m_jsonConfig, DEBUG_STREAM);
   DEBUG_PRINTLN();
   serializeJson(m_jsonConfig, configFile);
   configFile.close();
@@ -54,30 +57,36 @@ void Config::readConfig()
       if (configFile)
       {
         size_t size = configFile.size();
-        // Allocate a buffer to store contents of the file.
-        std::unique_ptr<char[]> buf(new char[size]);
-        configFile.readBytes(buf.get(), size);
-        DynamicJsonDocument json(size + 1);
-        DeserializationError error = deserializeJson(json, buf.get());
+        if (size > CONFIG_SIZE_LIMIT)
+        {
+          DEBUG_PRINTLN("Error! Config file bigger than allocated memory!");
+          return;
+        }
+        // Read the config file
+        m_jsonConfig.clear();
+        DeserializationError error = deserializeJson(m_jsonConfig, configFile);
         if (!error)
         {
-          DEBUG_PRINT("parsed json config: ");
-          serializeJson(json, Serial);
+          DEBUG_PRINT("Parsed json config: ");
+          serializeJson(m_jsonConfig, DEBUG_STREAM);
           DEBUG_PRINTLN();
-          m_jsonConfig = json;
         }
         else
         {
-          DEBUG_PRINTLN("failed to load json config");
+          DEBUG_PRINT("Error! Failed to load json config: ");
+          DEBUG_PRINTLN(error.c_str());
+          SPIFFS.format();
           writeToMemory();
+          ESP.restart();
         }
       }
+      configFile.close();
     }
   }
   else
   {
     DEBUG_PRINTLN("SPIFFS Mount failed. Formatting SPIFFS..");
-    SPIFFS.begin(true);
+    SPIFFS.format();
     ESP.restart();
   }
 }

@@ -1,10 +1,10 @@
 #ifndef configuration_h
 #define configuration_h
 
+#define CONFIG_SIZE_LIMIT 200
+
 #include <Arduino.h>
 #include <Ticker.h>
-#include "user_config.h"
-#include "WiFiManager.h"
 #include "ArduinoJson.h"
 
 class Config

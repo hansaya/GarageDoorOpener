@@ -17,9 +17,7 @@ void Mqtt::begin()
   snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
   snprintf(m_availHeader, 50, "%s/%s/avail", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
 
-  const char *server = g_config.getConfig()["mqtt_server"];
-  const char *port = g_config.getConfig()["mqtt_port"];
-  m_client.setServer(server, atoi(port));
+  m_client.setServer(g_config.getConfig()["mqtt_server"].as<const char *>(), atoi(g_config.getConfig()["mqtt_port"].as<const char *>()));
   m_client.setCallback([this](char *topic, byte *payload, unsigned int length) {
     this->mqttCalllBack(topic, payload, length);
   });
