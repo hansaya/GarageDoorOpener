@@ -11,6 +11,8 @@ public:
     ManagedWiFi();
     // Execute anything that belong in setup ()
     void begin();
+    // Reconnect logic if connection drops
+    void loop();
     // Manage wifi portal
     void manageWiFi(const bool reset_config = false);
     // Get the hostname
@@ -23,8 +25,6 @@ public:
     bool connected() const;
 
 private:
-    // Wifi change event callback
-    void eventCallback(const WiFiEvent_t event);
     // Config mode callback
     static void configModeCallback(WiFiManager *myWiFiManager);
     // Save Config callback
@@ -34,7 +34,6 @@ private:
     String m_macString;
     byte m_mac[7];
     static bool m_gotTheConfig;
-    bool m_connected;
 };
 
 extern ManagedWiFi g_managedWiFi;

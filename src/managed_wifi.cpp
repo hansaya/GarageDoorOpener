@@ -1,7 +1,11 @@
 #ifdef ESP32
+#include <WiFi.h>
 #include <ESPmDNS.h>
+#include <WebServer.h>
 #else
+#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
 #endif
 #include "managed_wifi.h"
 #include "config.h"
@@ -12,8 +16,7 @@ bool ManagedWiFi::m_gotTheConfig = false;
 
 ManagedWiFi::ManagedWiFi()
     : m_hostName("NA"),
-      m_macString("NA"),
-      m_connected(false)
+      m_macString("NA")
 {
   // Set the host name
   WiFi.macAddress(m_mac);
@@ -32,11 +35,6 @@ void ManagedWiFi::begin()
   DEBUG_PRINT(m_macString);
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
-
-  //Set a call back to handle wifi events.
-  WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) {
-    this->eventCallback(event);
-  });
 
   // Connect to access point
   manageWiFi();
@@ -111,25 +109,11 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   g_led.stopBlinkLed();
 }
 
-// Wifi status check
-void ManagedWiFi::eventCallback(const WiFiEvent_t event)
+void ManagedWiFi::loop()
 {
-  DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
-  switch (event)
+  if (!connected())
   {
-  case SYSTEM_EVENT_STA_GOT_IP:
-    m_connected = true;
-    g_led.setPixColor(CRGB::Blue);
-    g_led.showPixColor();
-    break;
-  case SYSTEM_EVENT_STA_DISCONNECTED:
-    DEBUG_PRINTLN("WiFi lost connection");
-    m_connected = false;
-    g_led.setPixColor(CRGB::Red);
-    g_led.showPixColor();
-    break;
-  default:
-    break;
+    manageWiFi(true);
   }
 }
 
@@ -143,14 +127,14 @@ String ManagedWiFi::getMacStr() const
   return m_macString;
 }
 
-byte* ManagedWiFi::getMac()
+byte *ManagedWiFi::getMac()
 {
   return m_mac;
 }
 
 bool ManagedWiFi::connected() const
 {
-  return m_connected;
+  return WiFi.isConnected();
 }
 
 ManagedWiFi g_managedWiFi;
