@@ -23,8 +23,6 @@ public:
     bool connected() const;
 
 private:
-    // Wifi change event callback
-    void eventCallback(const WiFiEvent_t event);
     // Config mode callback
     static void configModeCallback(WiFiManager *myWiFiManager);
     // Save Config callback

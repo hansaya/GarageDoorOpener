@@ -33,23 +33,18 @@ void ManagedWiFi::begin()
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
 
-  //Set a call back to handle wifi events.
-  WiFi.onEvent([this](WiFiEvent_t event, WiFiEventInfo_t info) {
-    this->eventCallback(event);
-  });
-
-  // Connect to access point
-  manageWiFi();
-
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
 #ifdef ESP32
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(m_hostName.c_str());
 #else
-  WiFi.hostname(m_hostName);
+  WiFi.hostname(m_hostName.c_str());
 #endif
   WiFi.mode(WIFI_STA);
+
+  // Connect to access point
+  manageWiFi();
 }
 
 // Gets called when WiFiManager enters configuration mode
@@ -83,6 +78,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   wifiManager.setConnectTimeout(60);
   wifiManager.setAPCallback(ManagedWiFi::configModeCallback);
   wifiManager.setConfigPortalTimeout(60);
+  wifiManager.setTimeout(120);
   wifiManager.setMinimumSignalQuality(10);
   wifiManager.addParameter(&customMqttServer);
   wifiManager.addParameter(&customMqttPort);
@@ -91,9 +87,15 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   wifiManager.setSaveConfigCallback(ManagedWiFi::saveConfigCallback);
 
   if (reset_config)
-    wifiManager.startConfigPortal(CLIENT);
+  {
+    if (!wifiManager.startConfigPortal(CLIENT))
+      ESP.restart();
+  }
   else
-    wifiManager.autoConnect(CLIENT); // This will hold the connection till it get a connection
+  {
+    if (!wifiManager.autoConnect(CLIENT)) // This will hold the connection till it get a connection
+      ESP.restart();
+  }
 
   if (m_gotTheConfig)
   {
@@ -109,28 +111,6 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   }
 
   g_led.stopBlinkLed();
-}
-
-// Wifi status check
-void ManagedWiFi::eventCallback(const WiFiEvent_t event)
-{
-  DEBUG_PRINT_WITH_FMT("[WiFi-event] event: %d\n", event);
-  switch (event)
-  {
-  case SYSTEM_EVENT_STA_GOT_IP:
-    m_connected = true;
-    g_led.setPixColor(CRGB::Blue);
-    g_led.showPixColor();
-    break;
-  case SYSTEM_EVENT_STA_DISCONNECTED:
-    DEBUG_PRINTLN("WiFi lost connection");
-    m_connected = false;
-    g_led.setPixColor(CRGB::Red);
-    g_led.showPixColor();
-    break;
-  default:
-    break;
-  }
 }
 
 String ManagedWiFi::getHostName() const
@@ -150,7 +130,7 @@ byte* ManagedWiFi::getMac()
 
 bool ManagedWiFi::connected() const
 {
-  return m_connected;
+  return (WiFi.status() == WL_CONNECTED);
 }
 
 ManagedWiFi g_managedWiFi;
