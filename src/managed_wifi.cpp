@@ -36,18 +36,20 @@ void ManagedWiFi::begin()
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
 
+  // Set the hostname
+  WiFi.mode(WIFI_STA);
+#ifdef ESP32
+  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
+  WiFi.setHostname(m_hostName.c_str());
+#else
+  WiFi.hostname(m_hostName.c_str());
+#endif
+
   // Connect to access point
   manageWiFi();
 
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
-#ifdef ESP32
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
-  WiFi.setHostname(m_hostName.c_str());
-#else
-  WiFi.hostname(m_hostName);
-#endif
-  WiFi.mode(WIFI_STA);
 }
 
 // Gets called when WiFiManager enters configuration mode
@@ -89,9 +91,15 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   wifiManager.setSaveConfigCallback(ManagedWiFi::saveConfigCallback);
 
   if (reset_config)
-    wifiManager.startConfigPortal(CLIENT);
+  {
+    if (!wifiManager.startConfigPortal(CLIENT))
+      ESP.restart();
+  }
   else
-    wifiManager.autoConnect(CLIENT); // This will hold the connection till it get a connection
+  {
+    if (!wifiManager.autoConnect(CLIENT)) // This will hold the connection till it get a connection
+      ESP.restart();
+  }
 
   if (m_gotTheConfig)
   {
@@ -134,7 +142,7 @@ byte *ManagedWiFi::getMac()
 
 bool ManagedWiFi::connected() const
 {
-  return WiFi.isConnected();
+  return (WiFi.status() == WL_CONNECTED);
 }
 
 ManagedWiFi g_managedWiFi;
