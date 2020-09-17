@@ -83,6 +83,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   wifiManager.setConnectTimeout(60);
   wifiManager.setAPCallback(ManagedWiFi::configModeCallback);
   wifiManager.setConfigPortalTimeout(60);
+  wifiManager.setTimeout(120);
   wifiManager.setMinimumSignalQuality(10);
   wifiManager.addParameter(&customMqttServer);
   wifiManager.addParameter(&customMqttPort);
