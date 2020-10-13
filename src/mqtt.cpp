@@ -106,7 +106,7 @@ void Mqtt::connect()
   DEBUG_PRINTLN("...");
 
   // Attempt to connect
-  if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, 1, true, "offline"))
+  if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, MQTT_QOS, true, "offline"))
   {
     // Subscribe to the topics.
     for (int i = 0; i < m_subTopicCnt; i++)
@@ -155,7 +155,7 @@ void Mqtt::subscribe(const char *topic)
   DEBUG_PRINT("Subscribing to ");
   DEBUG_PRINT(topic);
   DEBUG_PRINTLN("...");
-  m_client.subscribe(topic, 1);
+  m_client.subscribe(topic, MQTT_QOS);
 }
 
 Mqtt g_mqtt;

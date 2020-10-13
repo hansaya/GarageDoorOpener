@@ -3,6 +3,7 @@
 
 #define CALL_BACK_LIMIT 5
 #define TOPIC_CALLBACK_SIGNATURE std::function<void(String)>
+#define MQTT_QOS 1
 
 #include <functional>
 #include <PubSubClient.h>
