@@ -35,8 +35,13 @@ public:
     if (!m_active)
       pinMode(m_pin, INPUT_PULLUP);
     else
+    {
+#ifdef ESP32
       pinMode(m_pin, INPUT_PULLDOWN);
-
+#else
+      pinMode(m_pin, INPUT);
+#endif
+    }
     // Attach a interrupt to the pin
     attachInterrupt(m_pin, std::bind(&Button::readButton, this), CHANGE);
 
