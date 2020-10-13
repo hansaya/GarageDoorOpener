@@ -18,7 +18,7 @@ void Ota::begin()
         DEBUG_PRINTLN("\nEnd");
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        DEBUG_PRINT_WITH_FMT("Progress: %u%%\r", (progress / (total / 100)));
+        // DEBUG_PRINT_WITH_FMT("Progress: %u%%\r", (progress / (total / 100)));
     });
     ArduinoOTA.onError([](ota_error_t error) {
         g_ota.m_firmwareUpdating = false;

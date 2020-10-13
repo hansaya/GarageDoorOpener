@@ -1,7 +1,11 @@
 #ifdef ESP32
+#include <WiFi.h>
 #include <ESPmDNS.h>
+#include <WebServer.h>
 #else
+#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WebServer.h>
 #endif
 #include "managed_wifi.h"
 #include "config.h"
@@ -12,8 +16,7 @@ bool ManagedWiFi::m_gotTheConfig = false;
 
 ManagedWiFi::ManagedWiFi()
     : m_hostName("NA"),
-      m_macString("NA"),
-      m_connected(false)
+      m_macString("NA")
 {
   // Set the host name
   WiFi.macAddress(m_mac);
@@ -33,18 +36,20 @@ void ManagedWiFi::begin()
   DEBUG_PRINT(" Host: ");
   DEBUG_PRINTLN(m_hostName);
 
-  // Submit the hostname to DNS
-  MDNS.begin(m_hostName.c_str());
+  // Set the hostname
+  WiFi.mode(WIFI_STA);
 #ifdef ESP32
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(m_hostName.c_str());
 #else
   WiFi.hostname(m_hostName.c_str());
 #endif
-  WiFi.mode(WIFI_STA);
 
   // Connect to access point
   manageWiFi();
+
+  // Submit the hostname to DNS
+  MDNS.begin(m_hostName.c_str());
 }
 
 // Gets called when WiFiManager enters configuration mode
@@ -113,6 +118,14 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   g_led.stopBlinkLed();
 }
 
+void ManagedWiFi::loop()
+{
+  if (!connected())
+  {
+    manageWiFi(true);
+  }
+}
+
 String ManagedWiFi::getHostName() const
 {
   return m_hostName;
@@ -123,7 +136,7 @@ String ManagedWiFi::getMacStr() const
   return m_macString;
 }
 
-byte* ManagedWiFi::getMac()
+byte *ManagedWiFi::getMac()
 {
   return m_mac;
 }

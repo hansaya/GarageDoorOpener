@@ -87,6 +87,7 @@ void loop()
 {
   // Ota update loop.
   g_ota.loop();
+  g_managedWiFi.loop();
 
 #if defined(DEBUG_TELNET)
   // handle the Telnet connection
@@ -94,7 +95,7 @@ void loop()
 #endif
 
   // routine functions.
-  if (!g_ota.busy() && g_managedWiFi.connected())
+  if (!g_ota.busy())
   {
     g_mqtt.loop();
     leftDoor.loop();

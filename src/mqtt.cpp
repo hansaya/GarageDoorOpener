@@ -50,15 +50,15 @@ void Mqtt::loop()
   }
 
   // Publish availability every 10 minutes
-  // if (m_client.connected())
-  // {
-  //   static unsigned long aliveMessageResendPeriod;
-  //   if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
-  //   {
-  //     aliveMessageResendPeriod = currentMillis;
-  //     publishBirthMessage();
-  //   }
-  // }
+  if (m_client.connected())
+  {
+    static unsigned long aliveMessageResendPeriod;
+    if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
+    {
+      aliveMessageResendPeriod = currentMillis;
+      publishBirthMessage();
+    }
+  }
   m_client.loop();
 }
 
@@ -110,10 +110,10 @@ void Mqtt::connect()
   // Attempt to connect
   if (m_client.connect(clientId.c_str(), g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, 0, true, "offline"))
   {
-    publishBirthMessage();
     // Subscribe to the topics.
     for (int i = 0; i < m_subTopicCnt; i++)
       subscribe(m_topics[i].c_str());
+    publishBirthMessage();
   }
   else
   {
