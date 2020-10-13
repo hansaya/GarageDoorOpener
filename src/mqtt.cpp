@@ -102,13 +102,11 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 void Mqtt::connect()
 {
   DEBUG_PRINT("Connecting to MQTT with client id ");
-  String clientId = CLIENT;
-  clientId += String(random(0xffff), HEX);
-  DEBUG_PRINT(clientId);
+  DEBUG_PRINT(m_uniqueId);
   DEBUG_PRINTLN("...");
 
   // Attempt to connect
-  if (m_client.connect(clientId.c_str(), g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, 0, true, "offline"))
+  if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, 1, true, "offline"))
   {
     // Subscribe to the topics.
     for (int i = 0; i < m_subTopicCnt; i++)
