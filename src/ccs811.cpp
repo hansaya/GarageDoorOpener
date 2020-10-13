@@ -84,6 +84,7 @@ void CCS811::co2MqttAnnounce() const
     root["stat_t"] = "~/state";
     root["unit_of_meas"] = "ppm";
     root["val_tpl"] = "{{value_json.co2}}";
+    root["qos"] = 1;
     root["device"]["ids"] = g_mqtt.getUniqueId();
     root["device"]["name"] = g_managedWiFi.getHostName();
     root["device"]["mf"] = "DIY";

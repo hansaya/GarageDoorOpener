@@ -155,7 +155,7 @@ void Mqtt::subscribe(const char *topic)
   DEBUG_PRINT("Subscribing to ");
   DEBUG_PRINT(topic);
   DEBUG_PRINTLN("...");
-  m_client.subscribe(topic);
+  m_client.subscribe(topic, 1);
 }
 
 Mqtt g_mqtt;
