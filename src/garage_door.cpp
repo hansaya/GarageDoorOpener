@@ -123,23 +123,16 @@ void GarageDoor::mqttAnnounce() const
 
 void GarageDoor::publishStatus() const
 {
-    if (g_mqtt.connected())
-    {
-        char statusTopic[80];
-        snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id.c_str());
+    char statusTopic[80];
+    snprintf(statusTopic, 80, "%s/%s/state", m_topicMQTTHeader, m_id.c_str());
 
-        StaticJsonDocument<100> json;
-        if (m_doorOpen)
-            json["status"] = "open";
-        else
-            json["status"] = "closed";
-
-        char outgoingJsonBuffer[100];
-        serializeJson(json, outgoingJsonBuffer);
-        g_mqtt.publishToMQTT(statusTopic, outgoingJsonBuffer);
-    }
+    StaticJsonDocument<100> json;
+    if (m_doorOpen)
+        json["status"] = "open";
     else
-    {
-        DEBUG_PRINTLN("Cannot publish, not connected to MQTT server.");
-    }
+        json["status"] = "closed";
+
+    char outgoingJsonBuffer[100];
+    serializeJson(json, outgoingJsonBuffer);
+    g_mqtt.publishToMQTT(statusTopic, outgoingJsonBuffer);
 }

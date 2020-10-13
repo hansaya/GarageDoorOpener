@@ -62,7 +62,8 @@ void CCS811::publish()
     }
     else
     {
-        DEBUG_PRINTLN("Cannot publish, not connected to MQTT server.");
+        m_error = true;
+        DEBUG_PRINTLN("CCS811 not working properly!");
     }
     digitalWrite(CCS811_WAKE, HIGH);
 }
