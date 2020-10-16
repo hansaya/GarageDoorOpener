@@ -10,12 +10,12 @@ void Ota::begin()
     ArduinoOTA.onStart([]() {
         g_ota.m_firmwareUpdating = true;
         g_led.blinkLed();
-        DEBUG_PRINTLN("Start");
+        DEBUG_PRINTLN("Starting OTA");
     });
     ArduinoOTA.onEnd([]() {
         g_ota.m_firmwareUpdating = false;
         g_led.stopBlinkLed();
-        DEBUG_PRINTLN("\nEnd");
+        DEBUG_PRINTLN("\nEnding OTA");
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
         // DEBUG_PRINT_WITH_FMT("Progress: %u%%\r", (progress / (total / 100)));
