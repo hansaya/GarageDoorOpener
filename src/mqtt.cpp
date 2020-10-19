@@ -2,12 +2,14 @@
 #include "user_config.h"
 #include "managed_wifi.h"
 #include "config.h"
-#include "debug.h"
+#include "log.h"
 #include "led.h"
 
 Mqtt::Mqtt()
     : m_espClient(),
-      m_client(m_espClient)
+      m_client(m_espClient),
+      m_hassioAlive(false),
+      m_error(false)
 {
 }
 
@@ -33,59 +35,83 @@ void Mqtt::begin()
 
   if (g_managedWiFi.connected())
     connect();
+
+  // Keep track of home assistant
+  subscribe("homeassistant/status", [this](String payload) {
+    g_log.write(Log::Debug, payload);
+    if (payload == "online")
+    {
+      // If home assistant changed the status, prepare to connect again.
+      if(!this->m_hassioAlive)
+        m_error = true;
+      this->m_hassioAlive = true;
+    }
+    else if (payload == "offline")
+    {
+      this->m_hassioAlive = false;
+    }
+  });
+
+  // If self will message goes offline, reconnect to the MQTT server.
+  subscribe(m_availHeader, [this](String payload) {
+    g_log.write(Log::Debug, payload);
+    if (payload == "offline")
+      m_error = true;
+  });
+
+  // Ignore any errors at start
+  m_error = false;
 }
 
 void Mqtt::loop()
 {
   unsigned long currentMillis = millis(); // Time now
   // Connect to MQTT server
-  if (!m_client.connected() && g_managedWiFi.connected())
+  if ((m_error || !m_client.connected()) && g_managedWiFi.connected())
   {
     static unsigned long mqttConnectWaitPeriod;
     if (currentMillis - mqttConnectWaitPeriod >= 30000)
     {
       mqttConnectWaitPeriod = currentMillis;
       connect();
+      m_error = false;
     }
   }
 
-  // Publish availability every 10 minutes
-  if (m_client.connected())
-  {
-    static unsigned long aliveMessageResendPeriod;
-    if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
-    {
-      aliveMessageResendPeriod = currentMillis;
-      publishBirthMessage();
-    }
-  }
+  // // Publish availability every 10 minutes
+  // if (m_client.connected())
+  // {
+  //   static unsigned long aliveMessageResendPeriod;
+  //   if (currentMillis - aliveMessageResendPeriod >= 60 * 10 * 1000)
+  //   {
+  //     aliveMessageResendPeriod = currentMillis;
+  //     publishBirthMessage();
+  //   }
+  // }
   m_client.loop();
 }
 
 const bool Mqtt::connected()
 {
-  return m_client.connected();
+  return m_client.connected() && m_hassioAlive;
 }
 
 // Function that publishes birthMessage
 void Mqtt::publishBirthMessage()
 {
   // Publish the birthMessage
-  DEBUG_PRINT("Publishing birth message \"");
-  publishToMQTT(m_availHeader, "online");
+  g_log.write(Log::Debug, "Publishing birth message \"");
+  publishToMQTT(m_availHeader, "online", true);
 }
 
 // Callback when MQTT message is received; calls triggerDoorAction(), passing topic and payload as parameters
 void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 {
-  DEBUG_PRINT("Message arrived [");
-  DEBUG_PRINT(topic);
-  DEBUG_PRINT("] ");
+  g_log.write(Log::Debug, "Message arrived [" + String (topic) + "] ");
   for (unsigned int i = 0; i < length; i++)
   {
-    DEBUG_PRINT((char)payload[i]);
+    g_log.write(Log::Debug, String ((char)payload[i]));
   }
-  DEBUG_PRINTLN();
 
   String topicToProcess = topic;
   payload[length] = '\0';
@@ -101,9 +127,8 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 
 void Mqtt::connect()
 {
-  DEBUG_PRINT("Connecting to MQTT with client id ");
-  DEBUG_PRINT(m_uniqueId);
-  DEBUG_PRINTLN("...");
+  g_log.write(Log::Debug, "Connecting to MQTT with client id " + String(m_uniqueId) + "...");
+  m_client.disconnect();
 
   // Attempt to connect
   if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, MQTT_QOS, true, "offline"))
@@ -115,35 +140,29 @@ void Mqtt::connect()
   }
   else
   {
-    DEBUG_PRINT("Failed to connect to MQTT! ");
-    DEBUG_PRINT(m_client.state());
-    DEBUG_PRINTLN(" Trying again in 30 seconds");
+    g_log.write(Log::Error, "Failed to connect to MQTT Server! " + String(m_client.state()) + ",Trying again in 30 seconds");
   }
 }
 
 // Publish the MQTT payload.
-void Mqtt::publishToMQTT(const char *p_topic, const char *p_payload)
+void Mqtt::publishToMQTT(const char *p_topic, const char *p_payload, bool retained)
 {
-  if (m_client.publish(p_topic, p_payload, true))
+  if (m_client.publish(p_topic, p_payload, retained))
   {
-    DEBUG_PRINT(F("INFO: MQTT message published successfully, topic: "));
-    DEBUG_PRINT(p_topic);
-    DEBUG_PRINT(F(", payload: "));
-    DEBUG_PRINTLN(p_payload);
+    String message = "MQTT message published successfully, topic: " + String(p_topic) + ", payload: " + String(p_payload);
+    g_log.write(Log::Debug, message);
     g_led.doubleFastBlink();
   }
   else
   {
-    DEBUG_PRINTLN(F("ERROR: MQTT message not published, either connection lost, or message too large. Topic: "));
-    DEBUG_PRINT(p_topic);
-    DEBUG_PRINT(F(" , payload: "));
-    DEBUG_PRINTLN(p_payload);
+    String message = "MQTT message not published, either connection lost, or message too large. Topic: " + String(p_topic) + " , payload: " + String(p_payload);
+    g_log.write(Log::Error, message);
   }
 }
 
 void Mqtt::subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback)
 {
-  if (connected())
+  if (m_client.connected())
     subscribe(topic.c_str());
   m_topics[m_subTopicCnt] = topic;
   m_callBacks[m_subTopicCnt] = callback;
@@ -152,9 +171,7 @@ void Mqtt::subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback)
 
 void Mqtt::subscribe(const char *topic)
 {
-  DEBUG_PRINT("Subscribing to ");
-  DEBUG_PRINT(topic);
-  DEBUG_PRINTLN("...");
+  g_log.write(Log::Debug, "Subscribing to " + String(topic) + "...");
   m_client.subscribe(topic, MQTT_QOS);
 }
 

@@ -1,5 +1,5 @@
 #include "ccs811.h"
-#include "debug.h"
+#include "log.h"
 #include "mqtt.h"
 #include "managed_wifi.h"
 #include <Arduino.h>
@@ -13,7 +13,7 @@ void CCS811::begin()
     pinMode(CCS811_WAKE, OUTPUT);
     digitalWrite(CCS811_WAKE, LOW);
     if (!ccs.begin(0x5A))
-        DEBUG_PRINTLN("Failed to start CCS811 sensor! Please check your wiring.");
+        g_log.write(Log::Error, "Failed to start CCS811 sensor! Please check your wiring.");
     else
         ccs.setTempOffset(14.0);
     digitalWrite(CCS811_WAKE, HIGH);
@@ -63,7 +63,7 @@ void CCS811::publish()
     else
     {
         m_error = true;
-        DEBUG_PRINTLN("CCS811 not working properly!");
+        g_log.write(Log::Error, "CCS811 not working properly!");
     }
     digitalWrite(CCS811_WAKE, HIGH);
 }

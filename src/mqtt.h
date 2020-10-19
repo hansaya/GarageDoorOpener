@@ -25,7 +25,7 @@ public:
     // Return true if connectecd to MQTT server
     const bool connected();
     // Publish a message to MQTT server.
-    void publishToMQTT(const char *p_topic, const char *p_payload);
+    void publishToMQTT(const char *p_topic, const char *p_payload, bool retained = true);
     // Get the unique id.
     const char *getUniqueId() const { return m_uniqueId; }
     // Set a call back for subscribed topics.
@@ -51,6 +51,8 @@ private:
     TOPIC_CALLBACK_SIGNATURE m_callBacks[CALL_BACK_LIMIT];
     char m_topicMQTTHeader[50];
     char m_availHeader[50];
+    bool m_hassioAlive;
+    bool m_error;
 };
 
 extern Mqtt g_mqtt;

@@ -3,6 +3,7 @@
 
 // #define DEBUG_SERIAL
 #define DEBUG_TELNET
+#define LOG_LEVEL Log::Debug
 
 // -- Project -------------------------------------------
 #define CLIENT "GarageDoorOpener" // Client ID for the ESP

@@ -13,6 +13,7 @@
 #include "mqtt.h"
 #include "debug.h"
 #include "ccs811.h"
+#include "log.h"
 
 // Garage door config.
 GarageDoor leftDoor("LeftGarageDoor", DOOR1_RELAY_PIN, DOOR1_STATUS_PIN, DOOR1_ALIAS);
@@ -24,10 +25,7 @@ ButtonEvents longButtonPress({800, false, true});
 ButtonEvents resetButtonPress({6000, false, true});
 Button<3> gpio0Button(BUTTON, LOW, &sortButtonPress, &longButtonPress, &resetButtonPress);
 
-#ifdef DEBUG_TELNET
-WiFiServer telnetServer(DEBUG_TELNET_PORT);
-WiFiClient telnetClient;
-#endif
+
 
 // Handle button inputs
 void handleButtonInput()
@@ -35,24 +33,23 @@ void handleButtonInput()
   if (sortButtonPress.pressed)
   {
     sortButtonPress.pressed = false;
-    DEBUG_PRINT("S");
+    g_log.write(Log::Debug, "S");
   }
   if (longButtonPress.pressed)
   {
     longButtonPress.pressed = false;
-    DEBUG_PRINT("L");
+    g_log.write(Log::Debug, "L");
   }
   if (resetButtonPress.pressed)
   {
     resetButtonPress.pressed = false;
-    DEBUG_PRINT("R");
+    g_log.write(Log::Debug, "R");
     g_managedWiFi.manageWiFi(true);
   }
 }
 
 void setup()
 {
-  Serial.begin(115200);
   // Read the flash for the previous config
   g_config.begin();
   // Function button setup.
@@ -60,16 +57,13 @@ void setup()
   // Led Setup
   g_led.begin();
 
-  DEBUG_PRINTLN("Starting GarHAge...");
+  g_log.write(Log::Debug, "Starting GarHAge...");
 
   // Connect to access point
   g_managedWiFi.begin();
 
-  // Run the telnet server for debugging.
-#if defined(DEBUG_TELNET)
-  telnetServer.begin();
-  telnetServer.setNoDelay(true);
-#endif
+  // Start the logger.
+  g_log.begin();
 
   // Start the services.
   g_ota.begin();
@@ -85,14 +79,9 @@ void setup()
 
 void loop()
 {
-  // Ota update loop.
   g_ota.loop();
   g_managedWiFi.loop();
-
-#if defined(DEBUG_TELNET)
-  // handle the Telnet connection
-  handleTelnet();
-#endif
+  g_log.loop();
 
   // routine functions.
   if (!g_ota.busy())

@@ -5,7 +5,7 @@
 #endif
 #include "config.h"
 #include "ArduinoJson.h"
-#include "debug.h"
+#include "log.h"
 #include "user_config.h"
 
 Config::Config() : m_jsonConfig(JSON_OBJECT_SIZE(4) + CONFIG_SIZE_LIMIT)
@@ -31,14 +31,13 @@ void Config::saveConfig()
 // Saving the config to SPIFF
 void Config::writeToMemory()
 {
-  DEBUG_PRINT("Saving config :");
+  g_log.write(Log::Debug, "Saving config :");
 
   File configFile = SPIFFS.open("/config.json", "w+");
   if (!configFile)
-    DEBUG_PRINTLN("failed to open config file for writing");
+    g_log.write(Log::Error, "failed to open config file for writing");
 
-  serializeJson(m_jsonConfig, DEBUG_STREAM);
-  DEBUG_PRINTLN();
+  // serializeJson(m_jsonConfig, DEBUG_STREAM);
   serializeJson(m_jsonConfig, configFile);
   configFile.close();
   m_shouldSaveConfig = false;
@@ -59,7 +58,7 @@ void Config::readConfig()
         size_t size = configFile.size();
         if (size > CONFIG_SIZE_LIMIT)
         {
-          DEBUG_PRINTLN("Error! Config file bigger than allocated memory!");
+          g_log.write(Log::Error, "Config file bigger than allocated memory!");
           return;
         }
         // Read the config file
@@ -67,14 +66,12 @@ void Config::readConfig()
         DeserializationError error = deserializeJson(m_jsonConfig, configFile);
         if (!error)
         {
-          DEBUG_PRINT("Parsed json config: ");
-          serializeJson(m_jsonConfig, DEBUG_STREAM);
-          DEBUG_PRINTLN();
+          g_log.write(Log::Debug, "Parsed json config: ");
+          // serializeJson(m_jsonConfig, DEBUG_STREAM);
         }
         else
         {
-          DEBUG_PRINT("Error! Failed to load json config: ");
-          DEBUG_PRINTLN(error.c_str());
+          g_log.write(Log::Debug, "Failed to load json config: " + String (error.c_str()));
           SPIFFS.format();
           writeToMemory();
           ESP.restart();
@@ -85,7 +82,7 @@ void Config::readConfig()
   }
   else
   {
-    DEBUG_PRINTLN("SPIFFS Mount failed. Formatting SPIFFS..");
+    g_log.write(Log::Warn, "SPIFFS Mount failed. Formatting SPIFFS..");
     SPIFFS.format();
     ESP.restart();
   }

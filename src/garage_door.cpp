@@ -2,7 +2,7 @@
 #include "managed_wifi.h"
 #include "mqtt.h"
 #include <ArduinoJson.h>
-#include "debug.h"
+#include "log.h"
 
 GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t statusPin, String name)
     : m_name(name),
@@ -50,7 +50,7 @@ void GarageDoor::begin()
     char cmdTopic[80];
     snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str());
     g_mqtt.subscribe(cmdTopic, [this](String payload) {
-        DEBUG_PRINTLN(payload);
+        g_log.write(Log::Debug, payload);
         if (payload == "OPEN")
         {
             this->open();
@@ -91,7 +91,7 @@ void GarageDoor::triggerRelay()
     digitalWrite(m_relayPin, ACTIVE_HIGH_RELAY);
     m_ticker.once_ms<uint16_t>(
         400, [](uint16_t pin) {
-            DEBUG_PRINTLN("Relay triggered for 400ms");
+            g_log.write(Log::Debug, "Relay triggered for 400ms");
             digitalWrite(pin, !ACTIVE_HIGH_RELAY);
         },
         m_relayPin);

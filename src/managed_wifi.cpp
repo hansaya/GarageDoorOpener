@@ -10,7 +10,7 @@
 #include "managed_wifi.h"
 #include "config.h"
 #include "led.h"
-#include "debug.h"
+#include "log.h"
 
 bool ManagedWiFi::m_gotTheConfig = false;
 
@@ -31,10 +31,8 @@ ManagedWiFi::ManagedWiFi()
 
 void ManagedWiFi::begin()
 {
-  DEBUG_PRINT("Mac address: ");
-  DEBUG_PRINT(m_macString);
-  DEBUG_PRINT(" Host: ");
-  DEBUG_PRINTLN(m_hostName);
+  g_log.write(Log::Debug, "Mac address: " + m_macString);
+  g_log.write(Log::Debug, " Host: " + m_hostName);
 
   // Set the hostname
   WiFi.mode(WIFI_STA);
@@ -55,10 +53,8 @@ void ManagedWiFi::begin()
 // Gets called when WiFiManager enters configuration mode
 void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
 {
-  DEBUG_PRINTLN("Entered config mode");
-  DEBUG_PRINTLN(WiFi.softAPIP());
   //if you used auto generated SSID, print it
-  DEBUG_PRINTLN(myWiFiManager->getConfigPortalSSID());
+  g_log.write(Log::Debug, "Entered config mode, IP:" + String(WiFi.softAPIP()) + " AP:" + myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
   g_led.blinkLed();
 }
@@ -66,7 +62,7 @@ void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
 // Call back for saving the config.
 void ManagedWiFi::saveConfigCallback()
 {
-  DEBUG_PRINTLN("Should save config");
+  g_log.write(Log::Debug, "Should save config");
   m_gotTheConfig = true;
 }
 
@@ -109,8 +105,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
     g_config.getConfig()["mqtt_user"] = customMqttUser.getValue();
     g_config.getConfig()["mqtt_pass"] = customMqttPass.getValue();
 
-    DEBUG_PRINT("mqtt server: ");
-    DEBUG_PRINTLN(g_config.getConfig()["mqtt_server"].as<const char *>());
+    g_log.write(Log::Debug, "mqtt server: " + String(g_config.getConfig()["mqtt_server"].as<const char *>()));
     g_config.saveConfig();
     ESP.restart();
   }

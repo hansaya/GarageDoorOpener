@@ -11,7 +11,7 @@
 
 // Macros for debugging
 #ifdef DEBUG_TELNET
-  #define DEBUG_TELNET_PORT 23
+  
   extern WiFiServer telnetServer;
   extern WiFiClient telnetClient;
   #define DEBUG_PRINT(x) telnetClient.print(x)
