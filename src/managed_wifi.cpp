@@ -31,8 +31,7 @@ ManagedWiFi::ManagedWiFi()
 
 void ManagedWiFi::begin()
 {
-  g_log.write(Log::Debug, "Mac address: " + m_macString);
-  g_log.write(Log::Debug, " Host: " + m_hostName);
+  g_log.write(Log::Debug, "Mac address: " + m_macString + " Host: " + m_hostName);
 
   // Set the hostname
   WiFi.mode(WIFI_STA);

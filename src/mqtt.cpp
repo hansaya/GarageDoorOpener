@@ -38,12 +38,14 @@ void Mqtt::begin()
 
   // Keep track of home assistant
   subscribe("homeassistant/status", [this](String payload) {
-    g_log.write(Log::Debug, payload);
     if (payload == "online")
     {
       // If home assistant changed the status, prepare to connect again.
       if(!this->m_hassioAlive)
+      {
         m_error = true;
+        g_log.write(Log::Warn, "Home Assistant Came online! Reconnecting to MQTT..");
+      }
       this->m_hassioAlive = true;
     }
     else if (payload == "offline")
@@ -52,11 +54,13 @@ void Mqtt::begin()
     }
   });
 
-  // If self will message goes offline, reconnect to the MQTT server.
+  // If self "will" message goes offline, reconnect to the MQTT server.
   subscribe(m_availHeader, [this](String payload) {
-    g_log.write(Log::Debug, payload);
     if (payload == "offline")
+    {
       m_error = true;
+      g_log.write(Log::Warn, "Self \"will\" Message went offline.");
+    }
   });
 
   // Ignore any errors at start
@@ -100,19 +104,18 @@ const bool Mqtt::connected()
 void Mqtt::publishBirthMessage()
 {
   // Publish the birthMessage
-  g_log.write(Log::Debug, "Publishing birth message \"");
+  g_log.write(Log::Debug, "Publishing birth message");
   publishToMQTT(m_availHeader, "online", true);
 }
 
 // Callback when MQTT message is received; calls triggerDoorAction(), passing topic and payload as parameters
 void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 {
-  g_log.write(Log::Debug, "Message arrived [" + String (topic) + "] ");
 
   String topicToProcess = topic;
   payload[length] = '\0';
   String payloadToProcess = (char *)payload;
-  g_log.write(Log::Debug, payloadToProcess);
+  g_log.write(Log::Debug, "Message arrived [" + String(topic) + "]:" + payloadToProcess);
 
   // Call the call backs if the topic matches.
   for (int i = 0; i < m_subTopicCnt; i++)
