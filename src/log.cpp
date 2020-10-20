@@ -57,8 +57,20 @@ void Log::loop ()
 #endif
 }
 
-void Log::write(Log::Level level, String desc)
+void Log::write(Log::Level level, String desc, bool flush)
 {
+   if (flush)
+   {
+#if defined(DEBUG_TELNET)
+      m_telnetClient.print("FLUSH: ");
+      m_telnetClient.println(desc);
+#else
+      Serial.print("FLUSH: ");
+      Serial.println(desc);
+#endif
+      return;
+   }
+
    if (LOG_LEVEL <= level)
    {
       m_logs.push(desc);

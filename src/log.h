@@ -38,7 +38,7 @@ public:
    // Output logs to a stream when available.
    void loop();
    // Log a message
-   void write(Log::Level level, String desc);
+   void write(Log::Level level, String desc, bool flush = false);
 
 private:
 #ifdef DEBUG_TELNET
