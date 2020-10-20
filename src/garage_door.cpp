@@ -43,7 +43,6 @@ void GarageDoor::begin()
     char cmdTopic[80];
     snprintf(cmdTopic, 80, "%s/%s/cmd", m_topicMQTTHeader, m_id.c_str());
     g_mqtt.subscribe(cmdTopic, [this](String payload) {
-        g_log.write(Log::Debug, payload);
         if (payload == "OPEN")
             open();
         else if (payload == "CLOSE")
@@ -83,7 +82,7 @@ void GarageDoor::triggerRelay()
     digitalWrite(m_relayPin, ACTIVE_HIGH_RELAY);
     m_ticker.once_ms<uint16_t>(
         400, [](uint16_t pin) {
-            g_log.write(Log::Debug, "Relay triggered for 400ms");
+            g_log.write(Log::Debug, "GD: Relay triggered for 400ms");
             digitalWrite(pin, !ACTIVE_HIGH_RELAY);
         },
         m_relayPin);

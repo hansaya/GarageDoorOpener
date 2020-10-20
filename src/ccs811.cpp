@@ -21,11 +21,11 @@ void CCS811::begin()
 
     if (!ccs.begin(0x5A))
     {
-        g_log.write(Log::Error, "Failed to start CCS811 sensor! Reseting the sensor..");
+        g_log.write(Log::Error, "CCS811: Failed to start CCS811 sensor! Reseting the sensor..");
         reset();
         if (!ccs.begin(0x5A))
         {
-            g_log.write(Log::Error, "Failed to start CCS811 sensor! Please check your wiring.");
+            g_log.write(Log::Error, "CCS811: Failed to start CCS811 sensor! Please check your wiring.");
             m_enable = false;
             return;
         }
@@ -61,9 +61,9 @@ void CCS811::loop()
         if (m_error)
         {
             if (ccs.checkError())
-                g_log.write(Log::Error, "CCS811 internal error! Reseting the sensor..");
+                g_log.write(Log::Error, "CCS811: CCS811 internal error! Reseting the sensor..");
             else
-                g_log.write(Log::Error, "CCS811 not working properly! Reseting the sensor..");
+                g_log.write(Log::Error, "CCS811: CCS811 not working properly! Reseting the sensor..");
 
             g_led.setPixColor(CRGB::Red);
             g_led.showPixColor();

@@ -44,7 +44,7 @@ void Mqtt::begin()
       if(!this->m_hassioAlive)
       {
         m_error = true;
-        g_log.write(Log::Warn, "Home Assistant Came online! Reconnecting to MQTT..");
+        g_log.write(Log::Warn, "MQTT: Home Assistant Came online! Reconnecting to MQTT..");
       }
       this->m_hassioAlive = true;
     }
@@ -59,7 +59,7 @@ void Mqtt::begin()
     if (payload == "offline")
     {
       m_error = true;
-      g_log.write(Log::Warn, "Self \"will\" Message went offline.");
+      g_log.write(Log::Warn, "MQTT: Self \"will\" Message went offline.");
     }
   });
 
@@ -104,7 +104,7 @@ const bool Mqtt::connected()
 void Mqtt::publishBirthMessage()
 {
   // Publish the birthMessage
-  g_log.write(Log::Debug, "Publishing birth message");
+  g_log.write(Log::Debug, "MQTT: Publishing birth message");
   publishToMQTT(m_availHeader, "online", true);
 }
 
@@ -115,7 +115,7 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
   String topicToProcess = topic;
   payload[length] = '\0';
   String payloadToProcess = (char *)payload;
-  g_log.write(Log::Debug, "Message arrived [" + String(topic) + "]:" + payloadToProcess);
+  g_log.write(Log::Debug, "MQTT: Message arrived [" + String(topic) + "]:" + payloadToProcess);
 
   // Call the call backs if the topic matches.
   for (int i = 0; i < m_subTopicCnt; i++)
@@ -127,7 +127,7 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 
 void Mqtt::connect()
 {
-  g_log.write(Log::Debug, "Connecting to MQTT with client id " + String(m_uniqueId) + "...");
+  g_log.write(Log::Debug, "MQTT: Connecting to MQTT with client id " + String(m_uniqueId) + "...");
   m_client.disconnect();
 
   // Attempt to connect
@@ -140,12 +140,12 @@ void Mqtt::connect()
     // Publish configs.
     for (int i = 0; i < m_configCnt; i++)
       m_configCallBacks[i]();
-      
+
     publishBirthMessage();
   }
   else
   {
-    g_log.write(Log::Error, "Failed to connect to MQTT Server! " + String(m_client.state()) + ",Trying again in 30 seconds");
+    g_log.write(Log::Error, "MQTT: Failed to connect to MQTT Server! " + String(m_client.state()) + ",Trying again in 30 seconds");
   }
 }
 
@@ -154,13 +154,13 @@ void Mqtt::publishToMQTT(const char *p_topic, const char *p_payload, bool retain
 {
   if (m_client.publish(p_topic, p_payload, retained))
   {
-    String message = "MQTT message published successfully, topic: " + String(p_topic) + ", payload: " + String(p_payload);
+    String message = "MQTT: MQTT message published successfully, topic: " + String(p_topic) + ", payload: " + String(p_payload);
     g_log.write(Log::Debug, message);
     g_led.doubleFastBlink();
   }
   else
   {
-    String message = "MQTT message not published, either connection lost, or message too large. Topic: " + String(p_topic) + " , payload: " + String(p_payload);
+    String message = "MQTT: MQTT message not published, either connection lost, or message too large. Topic: " + String(p_topic) + " , payload: " + String(p_payload);
     g_log.write(Log::Error, message);
   }
 }
@@ -176,7 +176,7 @@ void Mqtt::subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback)
 
 void Mqtt::subscribe(const char *topic)
 {
-  g_log.write(Log::Debug, "Subscribing to " + String(topic) + "...");
+  g_log.write(Log::Debug, "MQTT: Subscribing to " + String(topic) + "...");
   m_client.subscribe(topic, MQTT_QOS);
 }
 

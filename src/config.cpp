@@ -31,11 +31,11 @@ void Config::saveConfig()
 // Saving the config to SPIFF
 void Config::writeToMemory()
 {
-  g_log.write(Log::Debug, "Saving config :");
+  g_log.write(Log::Debug, "CONFIG: Saving config :");
 
   File configFile = SPIFFS.open("/config.json", "w+");
   if (!configFile)
-    g_log.write(Log::Error, "failed to open config file for writing");
+    g_log.write(Log::Error, "CONFIG: failed to open config file for writing");
 
   // serializeJson(m_jsonConfig, DEBUG_STREAM);
   serializeJson(m_jsonConfig, configFile);
@@ -57,7 +57,7 @@ void Config::readConfig()
         size_t size = configFile.size();
         if (size > CONFIG_SIZE_LIMIT)
         {
-          g_log.write(Log::Error, "Config file bigger than allocated memory!");
+          g_log.write(Log::Error, "CONFIG: Config file bigger than allocated memory!");
           return;
         }
         // Read the config file
@@ -67,11 +67,11 @@ void Config::readConfig()
         {
           char outgoingJsonBuffer[500];
           serializeJson(m_jsonConfig, outgoingJsonBuffer);
-          g_log.write(Log::Debug, "Parsed json config: " + String(outgoingJsonBuffer));
+          g_log.write(Log::Debug, "CONFIG: Parsed json config: " + String(outgoingJsonBuffer));
         }
         else
         {
-          g_log.write(Log::Debug, "Failed to load json config: " + String (error.c_str()));
+          g_log.write(Log::Debug, "CONFIG: Failed to load json config: " + String(error.c_str()));
           SPIFFS.format();
           writeToMemory();
           ESP.restart();
@@ -82,7 +82,7 @@ void Config::readConfig()
   }
   else
   {
-    g_log.write(Log::Warn, "SPIFFS Mount failed. Formatting SPIFFS..");
+    g_log.write(Log::Warn, "CONFIG: SPIFFS Mount failed. Formatting SPIFFS..");
     SPIFFS.format();
     ESP.restart();
   }

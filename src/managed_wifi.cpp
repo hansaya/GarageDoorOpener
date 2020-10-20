@@ -31,7 +31,7 @@ ManagedWiFi::ManagedWiFi()
 
 void ManagedWiFi::begin()
 {
-  g_log.write(Log::Debug, "Mac address: " + m_macString + " Host: " + m_hostName);
+  g_log.write(Log::Debug, "WIFI: Mac address: " + m_macString + " Host: " + m_hostName);
 
   // Set the hostname
   WiFi.mode(WIFI_STA);
@@ -53,7 +53,7 @@ void ManagedWiFi::begin()
 void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
 {
   //if you used auto generated SSID, print it
-  g_log.write(Log::Debug, "Entered config mode, IP:" + String(WiFi.softAPIP()) + " AP:" + myWiFiManager->getConfigPortalSSID());
+  g_log.write(Log::Debug, "WIFI: Entered config mode, IP:" + String(WiFi.softAPIP()) + " AP:" + myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
   g_led.blinkLed();
 }
@@ -61,7 +61,7 @@ void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
 // Call back for saving the config.
 void ManagedWiFi::saveConfigCallback()
 {
-  g_log.write(Log::Debug, "Should save config");
+  g_log.write(Log::Debug, "WIFI: Should save config");
   m_gotTheConfig = true;
 }
 
@@ -104,7 +104,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
     g_config.getConfig()["mqtt_user"] = customMqttUser.getValue();
     g_config.getConfig()["mqtt_pass"] = customMqttPass.getValue();
 
-    g_log.write(Log::Debug, "mqtt server: " + String(g_config.getConfig()["mqtt_server"].as<const char *>()));
+    g_log.write(Log::Debug, "WIFI: mqtt server: " + String(g_config.getConfig()["mqtt_server"].as<const char *>()));
     g_config.saveConfig();
     ESP.restart();
   }
