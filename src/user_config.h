@@ -23,9 +23,6 @@
 #define ISO_IN_PIN 16
 
 //CCS811 pins
-#define SCL_CUSTOM_PIN 23 // v1 board
-//#define SCL_CUSTOM_PIN 21 // V2 board
-#define SDA_CUSTOM_PIN 22
 #define CCS811_WAKE 13
 #define CCS811_RST 14
 
