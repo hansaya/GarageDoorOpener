@@ -3,6 +3,7 @@
 
 #define CALL_BACK_LIMIT 5
 #define TOPIC_CALLBACK_SIGNATURE std::function<void(String)>
+#define CONFIG_CALLBACK_SIGNATURE std::function<void()>
 #define MQTT_QOS 1
 
 #include <functional>
@@ -32,6 +33,8 @@ public:
     void subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback);
     // Get availability header.
     const char *getAvailabilityTopic() const { return m_availHeader; }
+    // Publish Config
+    void publishConfig(CONFIG_CALLBACK_SIGNATURE callback);
 
 private:
     // Subscribe to a topic
@@ -47,8 +50,10 @@ private:
     PubSubClient m_client;
     char m_uniqueId[5];
     int m_subTopicCnt;
-    String m_topics[CALL_BACK_LIMIT];
-    TOPIC_CALLBACK_SIGNATURE m_callBacks[CALL_BACK_LIMIT];
+    String m_subTopics[CALL_BACK_LIMIT];
+    TOPIC_CALLBACK_SIGNATURE m_subCallBacks[CALL_BACK_LIMIT];
+    int m_configCnt;
+    CONFIG_CALLBACK_SIGNATURE m_configCallBacks[CALL_BACK_LIMIT];
     char m_topicMQTTHeader[50];
     char m_availHeader[50];
     bool m_hassioAlive;

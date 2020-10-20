@@ -35,6 +35,13 @@ void CCS811::begin()
     ccs.setDriveMode(CCS811_DRIVE_MODE_10SEC);
     ccs.disableInterrupt();
     m_enable = true;
+
+    // Publish auto discovery home assistant config. This is only needed for very first initialization.
+    g_mqtt.publishConfig([this]() {
+        mqttAnnounce("CO2", "ppm", "co2");
+        mqttAnnounce("Temperature", "°C", "temp");
+        mqttAnnounce("Volatile Organic Compounds", "ppb", "tvoc");
+    });
 }
 
 void CCS811::loop()
@@ -44,14 +51,6 @@ void CCS811::loop()
         return;
 
     unsigned long currentMillis = millis(); // Time now
-    // Publish auto discovery home assistant config. This is only needed for very first initialization.
-    if (!m_publishConfig && g_mqtt.connected())
-    {
-        mqttAnnounce("CO2", "ppm", "co2");
-        mqttAnnounce("Temperature", "°C", "temp");
-        mqttAnnounce("Volatile Organic Compounds", "ppb", "tvoc");
-        m_publishConfig = true;
-    }
 
     // Publish data every 60 secs
     static unsigned long sensorDataPublishPeriod;

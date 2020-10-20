@@ -35,7 +35,6 @@ private:
     uint16_t m_relayPin;
     uint16_t m_statusPin;
     char m_topicMQTTHeader[50];
-    bool m_publishConfig;
     bool m_doorOpen;
     ButtonEvents m_sortInputTrigger;
     Button<1> m_sensor;

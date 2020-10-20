@@ -9,7 +9,6 @@ GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t status
       m_id(identification),
       m_relayPin(relayPin),
       m_statusPin(statusPin),
-      m_publishConfig(false),
       m_doorOpen(false),
       m_sortInputTrigger({50, false, false}),
       m_sensor(statusPin, ACTIVE_HIGH_DOOR_SENSOR, &m_sortInputTrigger),
@@ -19,12 +18,6 @@ GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t status
 
 void GarageDoor::loop()
 {
-    // Publish auto discovery home assistant config. This is only needed for very first initialization.
-    if (!m_publishConfig && g_mqtt.connected())
-    {
-        mqttAnnounce();
-        m_publishConfig = true;
-    }
     // Keep track of the door sensor.
     if (m_sortInputTrigger.pressed == m_doorOpen)
     {
@@ -52,17 +45,16 @@ void GarageDoor::begin()
     g_mqtt.subscribe(cmdTopic, [this](String payload) {
         g_log.write(Log::Debug, payload);
         if (payload == "OPEN")
-        {
-            this->open();
-        }
+            open();
         else if (payload == "CLOSE")
-        {
-            this->close();
-        }
+            close();
         else if (payload == "STOP")
-        {
-            this->publishStatus();
-        }
+            publishStatus();
+    });
+
+    // Publish auto discovery home assistant config. This is only needed for very first initialization.
+    g_mqtt.publishConfig([this]() {
+        mqttAnnounce();
     });
 }
 

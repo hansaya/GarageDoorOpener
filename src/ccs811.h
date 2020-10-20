@@ -8,7 +8,7 @@
 class CCS811
 {
 public:
-    CCS811() : m_notFound(true), m_publishConfig(false), m_error(false), m_collectData(true), m_enable(false){};
+    CCS811() : m_notFound(true), m_error(false), m_collectData(true), m_enable(false){};
     // Execute anything that belong in setup ().
     void begin();
     // logic that needs to run with loop.
@@ -30,7 +30,6 @@ private:
 
     bool m_notFound;
     char m_topicMQTTHeader[50];
-    bool m_publishConfig;
     Adafruit_CCS811 ccs;
     bool m_error;
     bool m_collectData;

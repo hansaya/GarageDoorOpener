@@ -120,8 +120,8 @@ void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
   // Call the call backs if the topic matches.
   for (int i = 0; i < m_subTopicCnt; i++)
   {
-    if (m_topics[i] == topicToProcess && m_callBacks[i])
-      m_callBacks[i](payloadToProcess);
+    if (m_subTopics[i] == topicToProcess && m_subCallBacks[i])
+      m_subCallBacks[i](payloadToProcess);
   }
 }
 
@@ -135,7 +135,12 @@ void Mqtt::connect()
   {
     // Subscribe to the topics.
     for (int i = 0; i < m_subTopicCnt; i++)
-      subscribe(m_topics[i].c_str());
+      subscribe(m_subTopics[i].c_str());
+
+    // Publish configs.
+    for (int i = 0; i < m_configCnt; i++)
+      m_configCallBacks[i]();
+      
     publishBirthMessage();
   }
   else
@@ -164,8 +169,8 @@ void Mqtt::subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback)
 {
   if (m_client.connected())
     subscribe(topic.c_str());
-  m_topics[m_subTopicCnt] = topic;
-  m_callBacks[m_subTopicCnt] = callback;
+  m_subTopics[m_subTopicCnt] = topic;
+  m_subCallBacks[m_subTopicCnt] = callback;
   m_subTopicCnt++;
 }
 
@@ -173,6 +178,12 @@ void Mqtt::subscribe(const char *topic)
 {
   g_log.write(Log::Debug, "Subscribing to " + String(topic) + "...");
   m_client.subscribe(topic, MQTT_QOS);
+}
+
+void Mqtt::publishConfig(CONFIG_CALLBACK_SIGNATURE callback)
+{
+  m_configCallBacks[m_configCnt] = callback;
+  m_configCnt++;
 }
 
 Mqtt g_mqtt;
