@@ -51,7 +51,6 @@ void Config::readConfig()
   {
     if (SPIFFS.exists("/config.json"))
     {
-      //file exists, reading and loading
       File configFile = SPIFFS.open("/config.json", "r+");
       if (configFile)
       {
@@ -66,8 +65,9 @@ void Config::readConfig()
         DeserializationError error = deserializeJson(m_jsonConfig, configFile);
         if (!error)
         {
-          g_log.write(Log::Debug, "Parsed json config: ");
-          // serializeJson(m_jsonConfig, DEBUG_STREAM);
+          char outgoingJsonBuffer[500];
+          serializeJson(m_jsonConfig, outgoingJsonBuffer);
+          g_log.write(Log::Debug, "Parsed json config: " + String(outgoingJsonBuffer));
         }
         else
         {
