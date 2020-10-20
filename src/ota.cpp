@@ -2,7 +2,7 @@
 #include <ArduinoOTA.h>
 #include "managed_wifi.h"
 #include "led.h"
-// #include "log.h"
+#include "log.h"
 
 void Ota::begin()
 {
@@ -10,29 +10,28 @@ void Ota::begin()
     ArduinoOTA.onStart([]() {
         g_ota.m_firmwareUpdating = true;
         g_led.blinkLed();
-        // DEBUG_PRINTLN("Start");
+        g_log.write(Log::Debug, "OTA Start");
     });
     ArduinoOTA.onEnd([]() {
         g_ota.m_firmwareUpdating = false;
         g_led.stopBlinkLed();
-        // DEBUG_PRINTLN("\nEnd");
+        g_log.write(Log::Debug, "OTA End");
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
         // DEBUG_PRINT_WITH_FMT("Progress: %u%%\r", (progress / (total / 100)));
     });
     ArduinoOTA.onError([](ota_error_t error) {
         g_ota.m_firmwareUpdating = false;
-        // DEBUG_PRINT_WITH_FMT("Error[%u]: ", error);
-        // if (error == OTA_AUTH_ERROR)
-        //     DEBUG_PRINTLN("Auth Failed");
-        // else if (error == OTA_BEGIN_ERROR)
-        //     DEBUG_PRINTLN("Begin Failed");
-        // else if (error == OTA_CONNECT_ERROR)
-        //     DEBUG_PRINTLN("Connect Failed");
-        // else if (error == OTA_RECEIVE_ERROR)
-        //     DEBUG_PRINTLN("Receive Failed");
-        // else if (error == OTA_END_ERROR)
-        //     DEBUG_PRINTLN("End Failed");
+        if (error == OTA_AUTH_ERROR)
+            g_log.write(Log::Error, "OTA ERROR! Auth Failed");
+        else if (error == OTA_BEGIN_ERROR)
+            g_log.write(Log::Error, "OTA ERROR! Begin Failed");
+        else if (error == OTA_CONNECT_ERROR)
+            g_log.write(Log::Error, "OTA ERROR! Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR)
+            g_log.write(Log::Error, "OTA ERROR! Receive Failed");
+        else if (error == OTA_END_ERROR)
+            g_log.write(Log::Error, "OTA ERROR! End Failed");
     });
     ArduinoOTA.setHostname(g_managedWiFi.getHostName().c_str());
     ArduinoOTA.begin();

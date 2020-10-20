@@ -11,7 +11,6 @@
 #include "led.h"
 #include "garage_door.h"
 #include "mqtt.h"
-#include "debug.h"
 #include "ccs811.h"
 #include "log.h"
 
@@ -24,8 +23,6 @@ ButtonEvents sortButtonPress({50, false, true});
 ButtonEvents longButtonPress({800, false, true});
 ButtonEvents resetButtonPress({6000, false, true});
 Button<3> gpio0Button(BUTTON, LOW, &sortButtonPress, &longButtonPress, &resetButtonPress);
-
-
 
 // Handle button inputs
 void handleButtonInput()
@@ -50,6 +47,8 @@ void handleButtonInput()
 
 void setup()
 {
+  Serial.begin(115200);
+
   // Read the flash for the previous config
   g_config.begin();
   // Function button setup.

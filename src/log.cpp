@@ -7,7 +7,7 @@ void Log::begin ()
    m_telnetServer.begin();
    m_telnetServer.setNoDelay(true);
 #else
-   Serial.begin(115200);
+   Serial.updateBaudRate(115200);
 #endif
 }
 
@@ -16,26 +16,27 @@ void Log::loop ()
 #if defined(DEBUG_TELNET)
    // handle the Telnet connection
    handleTelnet();
-   if (m_telnetServer.hasClient() && m_logs.size() > 0)
+
+   if (m_telnetClient.connected() && m_logs.size() > 0)
    {
       switch (m_logLevel.shift())
       {
-         case Debug:
-            m_telnetClient.print("DEBUG: ");
-            break;
-         case Warn:
-            m_telnetClient.print("WARN: ");
-            break;
-         case Error:
-            m_telnetClient.print("ERROR: ");
-            break;
-         default:
-            m_telnetClient.print("UNKNOWN: ");
+      case Debug:
+         m_telnetClient.print("DEBUG: ");
+         break;
+      case Warn:
+         m_telnetClient.print("WARN: ");
+         break;
+      case Error:
+         m_telnetClient.print("ERROR: ");
+         break;
+      default:
+         m_telnetClient.print("UNKNOWN: ");
       }
       m_telnetClient.println(m_logs.shift());
    }
 #else
-   if (Serial.available() && m_logs.size() > 0)
+   if (Serial && m_logs.size() > 0)
    {
       switch (m_logLevel.shift())
       {
@@ -65,7 +66,6 @@ void Log::write(Log::Level level, String desc)
    }
 }
 
-// Handle telnet debuging
 #if defined(DEBUG_TELNET)
 void Log::handleTelnet()
 {

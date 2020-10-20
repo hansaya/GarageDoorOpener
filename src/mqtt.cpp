@@ -108,14 +108,11 @@ void Mqtt::publishBirthMessage()
 void Mqtt::mqttCalllBack(char *topic, byte *payload, unsigned int length)
 {
   g_log.write(Log::Debug, "Message arrived [" + String (topic) + "] ");
-  for (unsigned int i = 0; i < length; i++)
-  {
-    g_log.write(Log::Debug, String ((char)payload[i]));
-  }
 
   String topicToProcess = topic;
   payload[length] = '\0';
   String payloadToProcess = (char *)payload;
+  g_log.write(Log::Debug, payloadToProcess);
 
   // Call the call backs if the topic matches.
   for (int i = 0; i < m_subTopicCnt; i++)
