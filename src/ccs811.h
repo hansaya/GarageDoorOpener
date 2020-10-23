@@ -8,7 +8,7 @@
 class CCS811
 {
 public:
-    CCS811() : m_notFound(true), m_error(false), m_collectData(true), m_enable(true){};
+    CCS811() : m_notFound(true), m_error(false), m_collectData(true), m_enable(false){};
     // Execute anything that belong in setup ().
     void begin();
     // logic that needs to run with loop.
@@ -34,7 +34,8 @@ private:
     bool m_error;
     bool m_collectData;
     bool m_enable;
-    Ticker m_ticker;
+    Ticker m_pollingTicker;
+    Ticker m_initTicker;
 };
 
 extern CCS811 g_ccs811;

@@ -35,8 +35,12 @@ void CCS811::begin()
     ccs.setDriveMode(CCS811_DRIVE_MODE_10SEC);
     ccs.disableInterrupt();
 
-    // Call read data to ignore the first call
-    ccs.readData();
+    // Let sensor wake up to have accurate resutls.
+    m_initTicker.once<CCS811 *>(
+        60, [](CCS811 *ccs811) {
+            ccs811->m_enable = true;
+        },
+        this);
 
     // Publish auto discovery home assistant config. This is only needed for very first initialization.
     g_mqtt.publishConfig([this]() {
@@ -90,7 +94,7 @@ void CCS811::startCollectingData()
     wake();
 
     // Check every 100ms for availability of the data.
-    m_ticker.attach_ms<CCS811 *>(
+    m_pollingTicker.attach_ms<CCS811 *>(
         SENSOR_POLE_TIME, [](CCS811 *ccs811) {
             static short count;
             // Error out after 15 seconds.
@@ -98,14 +102,14 @@ void CCS811::startCollectingData()
             {
                 count = 0;
                 ccs811->m_error = true;
-                ccs811->m_ticker.detach();
+                ccs811->m_pollingTicker.detach();
             }
 
             if (ccs811->ccs.available())
             {
                 count = 0;
                 ccs811->m_collectData = true;
-                ccs811->m_ticker.detach();
+                ccs811->m_pollingTicker.detach();
                 return;
             }
         },
@@ -168,7 +172,7 @@ void CCS811::reset ()
 {
     digitalWrite(CCS811_RST, LOW);
     // Enable the sensor after a second.
-    m_ticker.once<CCS811 *>(
+    m_initTicker.once<CCS811 *>(
         1, [](CCS811 *ccs) {
             digitalWrite(CCS811_RST, HIGH);
             ccs->m_error = false;
