@@ -38,9 +38,9 @@ void CCS811::begin()
 
     // Publish auto discovery home assistant config. This is only needed for very first initialization.
     g_mqtt.publishConfig([this]() {
-        mqttAnnounce("CO2", "ppm", "co2");
-        mqttAnnounce("Temperature", "°C", "temp");
-        mqttAnnounce("Volatile Organic Compounds", "ppb", "tvoc");
+        mqttAnnounce("Garage Opener CO2", "ppm", "co2");
+        mqttAnnounce("Garage Opener Temperature", "°C", "temp");
+        mqttAnnounce("Garage Opener VOC", "ppb", "tvoc");
     });
 }
 
