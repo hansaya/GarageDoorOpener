@@ -58,6 +58,7 @@ private:
     char m_availHeader[50];
     bool m_hassioAlive;
     bool m_error;
+    bool m_connected;
 };
 
 extern Mqtt g_mqtt;

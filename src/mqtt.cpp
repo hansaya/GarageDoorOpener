@@ -9,7 +9,8 @@ Mqtt::Mqtt()
     : m_espClient(),
       m_client(m_espClient),
       m_hassioAlive(true), // Expect Hassio to be alive at start up to avoid unecessary recovery steps.
-      m_error(false)
+      m_error(false),
+      m_connected(false)
 {
 }
 
@@ -38,23 +39,28 @@ void Mqtt::begin()
     if (payload == "online")
     {
       // If home assistant changed the status, prepare to connect again.
-      if(!this->m_hassioAlive)
+      if(!m_hassioAlive)
       {
         m_error = true;
         g_log.write(Log::Warn, "MQTT: Home Assistant Came online! Reconnecting to MQTT..");
       }
-      this->m_hassioAlive = true;
+      m_hassioAlive = true;
     }
     else if (payload == "offline")
     {
-      this->m_hassioAlive = false;
+      m_hassioAlive = false;
     }
   });
 
   // If self "will" message goes offline, reconnect to the MQTT server.
   subscribe(m_availHeader, [this](String payload) {
-    if (payload == "offline")
+    if (payload == "online")
     {
+      m_connected = true;
+    }
+    else if (m_connected && payload == "offline")
+    {
+      m_connected = false;
       m_error = true;
       g_log.write(Log::Warn, "MQTT: Self \"will\" Message went offline.");
     }
@@ -91,7 +97,7 @@ void Mqtt::loop()
 
 const bool Mqtt::connected()
 {
-  return m_client.connected() && m_hassioAlive;
+  return m_connected && m_client.connected();
 }
 
 // Function that publishes birthMessage
@@ -123,6 +129,7 @@ void Mqtt::connect()
 {
   g_log.write(Log::Debug, "MQTT: Connecting to MQTT with client id " + String(m_uniqueId) + "...");
   m_client.disconnect();
+  m_connected = false;
 
   // Attempt to connect
   if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, MQTT_QOS, true, "offline"))
