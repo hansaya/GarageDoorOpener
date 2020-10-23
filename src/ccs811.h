@@ -8,7 +8,7 @@
 class CCS811
 {
 public:
-    CCS811() : m_notFound(true), m_error(false), m_collectData(true), m_enable(false){};
+    CCS811() : m_notFound(true), m_error(false), m_collectData(true), m_enable(true){};
     // Execute anything that belong in setup ().
     void begin();
     // logic that needs to run with loop.

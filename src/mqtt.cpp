@@ -8,7 +8,7 @@
 Mqtt::Mqtt()
     : m_espClient(),
       m_client(m_espClient),
-      m_hassioAlive(false),
+      m_hassioAlive(true), // Expect Hassio to be alive at start up to avoid unecessary recovery steps.
       m_error(false)
 {
 }
@@ -32,9 +32,6 @@ void Mqtt::begin()
 
   // Set the buffer size for json payload
   m_client.setBufferSize(812);
-
-  if (g_managedWiFi.connected())
-    connect();
 
   // Keep track of home assistant
   subscribe("homeassistant/status", [this](String payload) {
@@ -62,9 +59,6 @@ void Mqtt::begin()
       g_log.write(Log::Warn, "MQTT: Self \"will\" Message went offline.");
     }
   });
-
-  // Ignore any errors at start
-  m_error = false;
 }
 
 void Mqtt::loop()
@@ -73,7 +67,7 @@ void Mqtt::loop()
   // Connect to MQTT server
   if ((m_error || !m_client.connected()) && g_managedWiFi.connected())
   {
-    static unsigned long mqttConnectWaitPeriod;
+    static unsigned long mqttConnectWaitPeriod = 25000;
     if (currentMillis - mqttConnectWaitPeriod >= 30000)
     {
       mqttConnectWaitPeriod = currentMillis;

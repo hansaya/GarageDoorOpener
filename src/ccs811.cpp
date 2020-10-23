@@ -34,7 +34,9 @@ void CCS811::begin()
     ccs.setTempOffset(14.0);
     ccs.setDriveMode(CCS811_DRIVE_MODE_10SEC);
     ccs.disableInterrupt();
-    m_enable = true;
+
+    // Call read data to ignore the first call
+    ccs.readData();
 
     // Publish auto discovery home assistant config. This is only needed for very first initialization.
     g_mqtt.publishConfig([this]() {
@@ -112,7 +114,7 @@ void CCS811::startCollectingData()
 
 void CCS811::publish()
 {
-    if (!ccs.readData())
+    if (!ccs.checkError() && !ccs.readData())
     {
         char statusTopic[80];
         snprintf(statusTopic, 80, "%s/" SENSOR_NAME "/state", m_topicMQTTHeader);
