@@ -170,11 +170,12 @@ void CCS811::mqttAnnounce(String name, String unit, String id) const
 
 void CCS811::reset ()
 {
+    ccs.SWReset();
     digitalWrite(CCS811_RST, LOW);
+    digitalWrite(CCS811_RST, HIGH);
     // Enable the sensor after a second.
     m_initTicker.once<CCS811 *>(
         1, [](CCS811 *ccs) {
-            digitalWrite(CCS811_RST, HIGH);
             ccs->m_error = false;
         },
         this);

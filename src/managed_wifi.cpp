@@ -53,7 +53,7 @@ void ManagedWiFi::begin()
 void ManagedWiFi::configModeCallback(WiFiManager *myWiFiManager)
 {
   //if you used auto generated SSID, print it
-  g_log.write(Log::Debug, "WIFI: Entered config mode, IP:" + String(WiFi.softAPIP()) + " AP:" + myWiFiManager->getConfigPortalSSID());
+  g_log.write(Log::Debug, "WIFI: Entered config mode, IP:" + WiFi.softAPIP().toString() + " AP:" + myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
   g_led.blinkLed();
 }

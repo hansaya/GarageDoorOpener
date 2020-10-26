@@ -22,6 +22,7 @@ void Ota::begin()
     });
     ArduinoOTA.onError([](ota_error_t error) {
         g_ota.m_firmwareUpdating = false;
+        g_led.stopBlinkLed();
         if (error == OTA_AUTH_ERROR)
             g_log.write(Log::Error, "OTA: ERROR! Auth Failed");
         else if (error == OTA_BEGIN_ERROR)
