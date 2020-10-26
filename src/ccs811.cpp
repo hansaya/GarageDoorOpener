@@ -19,11 +19,11 @@ void CCS811::begin()
     digitalWrite(CCS811_WAKE, LOW);
     digitalWrite(CCS811_RST, HIGH);
 
-    if (!ccs.begin(0x5A))
+    if (!m_ccs.begin(CCS811_ADD))
     {
         g_log.write(Log::Error, "CCS811: Failed to start CCS811 sensor! Reseting the sensor..");
         reset();
-        if (!ccs.begin(0x5A))
+        if (!m_ccs.begin(CCS811_ADD))
         {
             g_log.write(Log::Error, "CCS811: Failed to start CCS811 sensor! Please check your wiring.");
             m_enable = false;
@@ -31,9 +31,9 @@ void CCS811::begin()
         }
     }
 
-    ccs.setTempOffset(14.0);
-    ccs.setDriveMode(CCS811_DRIVE_MODE_10SEC);
-    ccs.disableInterrupt();
+    m_ccs.setTempOffset(14.0);
+    m_ccs.setDriveMode(CCS811_DRIVE_MODE_10SEC);
+    m_ccs.disableInterrupt();
 
     // Let sensor wake up to have accurate resutls.
     m_initTicker.once<CCS811 *>(
@@ -66,7 +66,7 @@ void CCS811::loop()
         // If there is non-critical error, reset the sensor
         if (m_error)
         {
-            if (ccs.checkError())
+            if (m_ccs.checkError())
                 g_log.write(Log::Error, "CCS811: CCS811 internal error! Reseting the sensor..");
             else
                 g_log.write(Log::Error, "CCS811: CCS811 not working properly! Reseting the sensor..");
@@ -105,7 +105,7 @@ void CCS811::startCollectingData()
                 ccs811->m_pollingTicker.detach();
             }
 
-            if (ccs811->ccs.available())
+            if (ccs811->m_ccs.available())
             {
                 count = 0;
                 ccs811->m_collectData = true;
@@ -118,15 +118,15 @@ void CCS811::startCollectingData()
 
 void CCS811::publish()
 {
-    if (!ccs.checkError() && !ccs.readData())
+    if (!m_ccs.checkError() && !m_ccs.readData())
     {
         char statusTopic[80];
         snprintf(statusTopic, 80, "%s/" SENSOR_NAME "/state", m_topicMQTTHeader);
 
         StaticJsonDocument<100> json;
-        json["co2"] = ccs.geteCO2();
-        json["tvoc"] = ccs.getTVOC();
-        json["temp"] = ccs.calculateTemperature();
+        json["co2"] = m_ccs.geteCO2();
+        json["tvoc"] = m_ccs.getTVOC();
+        json["temp"] = m_ccs.calculateTemperature();
 
         char outgoingJsonBuffer[100];
         serializeJson(json, outgoingJsonBuffer);
@@ -170,13 +170,14 @@ void CCS811::mqttAnnounce(String name, String unit, String id) const
 
 void CCS811::reset ()
 {
-    ccs.SWReset();
     digitalWrite(CCS811_RST, LOW);
-    digitalWrite(CCS811_RST, HIGH);
     // Enable the sensor after a second.
     m_initTicker.once<CCS811 *>(
-        1, [](CCS811 *ccs) {
-            ccs->m_error = false;
+        1, [](CCS811 *sensor) {
+            digitalWrite(CCS811_RST, HIGH);
+            sensor->m_ccs.SWReset();
+            sensor->m_ccs.begin(CCS811_ADD);
+            sensor->m_error = false;
         },
         this);
 }

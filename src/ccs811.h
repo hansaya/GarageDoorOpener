@@ -30,7 +30,7 @@ private:
 
     bool m_notFound;
     char m_topicMQTTHeader[50];
-    Adafruit_CCS811 ccs;
+    Adafruit_CCS811 m_ccs;
     bool m_error;
     bool m_collectData;
     bool m_enable;

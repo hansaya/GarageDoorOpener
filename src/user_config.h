@@ -25,6 +25,7 @@
 //CCS811 pins
 #define CCS811_WAKE 13
 #define CCS811_RST 14
+#define CCS811_ADD 0x5A
 
 // Relay Parameters
 #define ACTIVE_HIGH_RELAY true

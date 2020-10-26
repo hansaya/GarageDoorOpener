@@ -12,7 +12,7 @@
 #include "user_config.h"
 
 #define DEBUG_TELNET_PORT 23
-#define LOG_SIZE 15
+#define LOG_SIZE 20
 
 class Log
 {
