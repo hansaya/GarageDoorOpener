@@ -10,7 +10,7 @@
 struct ButtonEvents
 {
   const unsigned long minDuration; // This needs to be higher than 100ms for events that are not triggering on release.
-  bool pressed;
+  volatile bool pressed;
   bool triggerOnRelease; // This flag will turn on a ticker to check the input periodically.
 };
 
@@ -116,7 +116,7 @@ private:
   }
 
   const uint16_t m_pin;
-  bool m_pressed;
+  volatile bool m_pressed;
   ButtonEvents *m_events[N];
   int m_eventLength;
   const bool m_active;

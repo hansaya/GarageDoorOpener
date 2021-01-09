@@ -38,12 +38,19 @@ void ManagedWiFi::begin()
 #ifdef ESP32
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE);
   WiFi.setHostname(m_hostName.c_str());
+  // Set the wifi power level to a low
+  esp_wifi_set_max_tx_power(20);
 #else
   WiFi.hostname(m_hostName.c_str());
 #endif
 
   // Connect to access point
   manageWiFi();
+
+  // Get the wifi power level.
+  int8_t power;
+  esp_wifi_get_max_tx_power(&power);
+  g_log.write(Log::Debug, "WIFI: Power level: " + String(power) + " RSSI: " + String(WiFi.RSSI()));
 
   // Submit the hostname to DNS
   MDNS.begin(m_hostName.c_str());
