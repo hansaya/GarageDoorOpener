@@ -4,6 +4,8 @@
 #include <ArduinoJson.h>
 #include "log.h"
 
+unsigned long GarageDoor::m_lastCall = 0;
+
 GarageDoor::GarageDoor(String identification, uint16_t relayPin, uint16_t statusPin, String name)
     : m_name(name),
       m_id(identification),
@@ -61,14 +63,14 @@ void GarageDoor::open()
 {
     // Sensor only triggered when door is closed so we can use it to trigger if the door is down.
     if (!m_doorOpen)
-        triggerRelay();
+        buttonPress();
 }
 
 void GarageDoor::close()
 {
     // Sensor only triggered when door is closed so we can use it not trigger if the door is down.
     if (m_doorOpen)
-        triggerRelay();
+        buttonPress();
 }
 
 bool GarageDoor::opened() const
@@ -76,12 +78,31 @@ bool GarageDoor::opened() const
     return m_doorOpen;
 }
 
+void GarageDoor::buttonPress()
+{
+    // Make sure there is a gap between each button press
+    if (millis() - m_lastCall > DELAY_BETWEEN_CALLS)
+    {
+        triggerRelay();
+    }
+    else
+    {
+        // Wait to press the button again.
+        m_queueTicker.once_ms<GarageDoor *>(
+            DELAY_BETWEEN_CALLS, [](GarageDoor *door) {
+                door->triggerRelay();
+            },
+            this);
+    }
+}
+
 void GarageDoor::triggerRelay()
 {
+    m_lastCall = millis();
     // Turn on the relay and let the ticker turn it off after 400ms
     digitalWrite(m_relayPin, ACTIVE_HIGH_RELAY);
     m_ticker.once_ms<uint16_t>(
-        400, [](uint16_t pin) {
+        RELAY_LATCH_TIME, [](uint16_t pin) {
             g_log.write(Log::Debug, "GD: Relay triggered for 400ms");
             digitalWrite(pin, !ACTIVE_HIGH_RELAY);
         },
