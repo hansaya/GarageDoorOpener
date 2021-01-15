@@ -12,12 +12,17 @@
 #include "user_config.h"
 
 #define DEBUG_TELNET_PORT 23
-#define LOG_SIZE 20
+#define LOG_SIZE 20 // Max buffer size in lines for log history.
 
+/**
+ * Class Log gives the capability to output log message. This is designed to buffer the logs until someone reads it. Capable of outputing to telnet and serial.
+ */
 class Log
 {
 public:
-   // Log level
+   /**
+    * Enum Level identifies the log level.
+    */
    enum Level
    {
       Debug,
@@ -25,6 +30,9 @@ public:
       Error
    };
 
+   /**
+    * Constructor.
+    */
    Log() :
 #ifdef DEBUG_TELNET
            m_telnetServer(DEBUG_TELNET_PORT),
@@ -33,18 +41,26 @@ public:
            m_logs(),
            m_logLevel()
    {}
-   // Execute anything that belong in setup ().
+   /**
+    * Execute anything that belong in setup ().
+    */
    void begin();
-   // Output logs to a stream when available.
+   /**
+    * Output logs to a stream when available.
+    */
    void loop();
-   // Log a message
+   /**
+    * Log a message.
+    */
    void write(Log::Level level, String desc, bool flush = false);
 
 private:
 #ifdef DEBUG_TELNET
    WiFiServer m_telnetServer;
    WiFiClient m_telnetClient;
-   // Handle telnet debuging
+   /**
+    * Handle telnet debuging.
+    */
    void handleTelnet();
 #endif
    CircularBuffer<String, LOG_SIZE> m_logs;

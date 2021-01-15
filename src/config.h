@@ -7,21 +7,38 @@
 #include <Ticker.h>
 #include "ArduinoJson.h"
 
+/**
+ * Class Config give the capability save user configuration in SPIFF as json.
+ */
 class Config
 {
 public:
+    /**
+     * Constructor.
+     */
     Config();
-    // Execute anything that belong in setup ()
+    /**
+     * Execute anything that belong in setup ().
+     */
     void begin();
-    // Save the config in flash.
+    /**
+     * Save the config in flash.
+     */
     void saveConfig();
-    // Read the config file from from the flash.
+    /**
+     * Read the config file from from the flash.
+     */
     void readConfig();
-    // Get the json config file.
+    /**
+     * Get the json config file.
+     * @return Configuration file as a json file.
+     */
     DynamicJsonDocument &getConfig();
 
 private:
-    // Write the config file to the memory.
+    /**
+     * Write the config file to the memory.
+     */
     void writeToMemory();
 
     DynamicJsonDocument m_jsonConfig;

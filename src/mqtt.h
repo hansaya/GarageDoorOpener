@@ -15,35 +15,77 @@
 #endif
 #include <Arduino.h>
 
+/**
+ * Class Mqtt handles MQTT communication. This is designed around Home Assistant integration.
+ */
 class Mqtt
 {
 public:
+    /**
+     * Constructor.
+     */
     Mqtt();
-    // Execute anything that belong in setup ()
+    /**
+     * Execute anything that belong in setup ().
+     */
     void begin();
-    // logic that needs to run with loop
+    /**
+     * logic that needs to run with in loop ().
+     */
     void loop();
-    // Return true if connectecd to MQTT server
+    /**
+     * Return true if connectecd to MQTT server.
+     */
     const bool connected();
-    // Publish a message to MQTT server.
-    void publishToMQTT(const char *p_topic, const char *p_payload, bool retained = true);
-    // Get the unique id.
+    /**
+     * Publish a message to MQTT server.
+     * @param[in] topic MQTT topic name.
+     * @param[in] payload MQTT playload.
+     * @param[in] retained Message retain flag.
+     */
+    void publishToMQTT(const char *topic, const char *payload, bool retained = true);
+    /**
+     * Get the unique id.
+     * @return String containing system unique id.
+     */
     const char *getUniqueId() const { return m_uniqueId; }
-    // Set a call back for subscribed topics.
+    /**
+     * Set a call back for subscribed topics.
+     * @param[in] topic MQTT Topic name.
+     * @param[in] callback Call back function pointer.
+     */
     void subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback);
-    // Get availability header.
+    /**
+     * Get availability header.
+     * @return MQTT avalability topic name.
+     */
     const char *getAvailabilityTopic() const { return m_availHeader; }
-    // Publish Config
+    /**
+     * Publish Config.
+     * @param[in] callback Call back function.
+     */
     void publishConfig(CONFIG_CALLBACK_SIGNATURE callback);
 
 private:
-    // Subscribe to a topic
+    /**
+     * Subscribe to a topic.
+     * @param[in] topic MQTT topic.
+     */
     void subscribe(const char *topic);
-    // Call back function for MQTT messages.
+    /**
+     * Call back function for MQTT messages.
+     * @param[in] topic MQTT topic.
+     * @param[in] payload MQTT playload.
+     * @param[in] length MQTT playload size.
+     */
     void mqttCalllBack(char *topic, byte *payload, unsigned int length);
-    // Publish availability message
+    /**
+     * Publish availability message.
+     */
     void publishBirthMessage();
-    // Connect to mqtt server.
+    /**
+     * Connect to mqtt server.
+     */
     void connect();
 
     WiFiClient m_espClient;

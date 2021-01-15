@@ -41,7 +41,7 @@ void handleButtonInput()
   {
     resetButtonPress.pressed = false;
     g_log.write(Log::Debug, "R");
-    g_managedWiFi.manageWiFi(true);
+    g_managedWiFi.reset();
   }
 }
 

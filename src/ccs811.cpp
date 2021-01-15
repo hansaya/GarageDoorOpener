@@ -136,7 +136,7 @@ void CCS811::publish()
         m_error = true;
 }
 
-void CCS811::mqttAnnounce(String name, String unit, String id) const
+void CCS811::mqttAnnounce(const String &name, const String &unit, const String &id) const
 {
     // Generate a unique id for hassio to keep track.
     char uniqId[80];

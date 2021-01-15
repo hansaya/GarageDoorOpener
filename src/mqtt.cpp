@@ -151,17 +151,17 @@ void Mqtt::connect()
 }
 
 // Publish the MQTT payload.
-void Mqtt::publishToMQTT(const char *p_topic, const char *p_payload, bool retained)
+void Mqtt::publishToMQTT(const char *topic, const char *payload, bool retained)
 {
-  if (m_client.publish(p_topic, p_payload, retained))
+  if (m_client.publish(topic, payload, retained))
   {
-    String message = "MQTT: MQTT message published successfully, topic: " + String(p_topic) + ", payload: " + String(p_payload);
+    String message = "MQTT: MQTT message published successfully, topic: " + String(topic) + ", payload: " + String(payload);
     g_log.write(Log::Debug, message);
     g_led.doubleFastBlink();
   }
   else
   {
-    String message = "MQTT: MQTT message not published, either connection lost, or message too large. Topic: " + String(p_topic) + " , payload: " + String(p_payload);
+    String message = "MQTT: MQTT message not published, either connection lost, or message too large. Topic: " + String(topic) + " , payload: " + String(payload);
     g_log.write(Log::Error, message);
   }
 }

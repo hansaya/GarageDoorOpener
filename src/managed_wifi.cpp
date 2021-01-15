@@ -147,4 +147,9 @@ bool ManagedWiFi::connected() const
   return (WiFi.status() == WL_CONNECTED);
 }
 
+void ManagedWiFi::reset()
+{
+  manageWiFi(true);
+}
+
 ManagedWiFi g_managedWiFi;
