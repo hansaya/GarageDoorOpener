@@ -8,12 +8,13 @@
 #include "log.h"
 #include "user_config.h"
 
-Config::Config() : m_jsonConfig(JSON_OBJECT_SIZE(4) + CONFIG_SIZE_LIMIT)
+Config::Config() : m_jsonConfig(JSON_OBJECT_SIZE(5) + CONFIG_SIZE_LIMIT)
 {
   m_jsonConfig["mqtt_server"] = MQTT_BROKER;
   m_jsonConfig["mqtt_port"] = MQTT_PORT;
   m_jsonConfig["mqtt_user"] = MQTT_USERNAME;
   m_jsonConfig["mqtt_pass"] = MQTT_PASSWORD;
+  m_jsonConfig["ha_prefix"] = MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX;
 }
 
 void Config::begin()
@@ -25,11 +26,11 @@ void Config::begin()
 void Config::saveConfig()
 {
   m_shouldSaveConfig = true;
-  writeToMemory();
+  writeToMemory(m_jsonConfig);
 }
 
 // Saving the config to SPIFF
-void Config::writeToMemory()
+void Config::writeToMemory(DynamicJsonDocument &json)
 {
   g_log.write(Log::Debug, "CONFIG: Saving config :");
 
@@ -38,7 +39,7 @@ void Config::writeToMemory()
     g_log.write(Log::Error, "CONFIG: failed to open config file for writing");
 
   // serializeJson(m_jsonConfig, DEBUG_STREAM);
-  serializeJson(m_jsonConfig, configFile);
+  serializeJson(json, configFile);
   configFile.close();
   m_shouldSaveConfig = false;
 }
@@ -46,6 +47,9 @@ void Config::writeToMemory()
 // Reading the config from SPIFF
 void Config::readConfig()
 {
+  bool error = false;
+  auto defaultConfig = m_jsonConfig;
+
   // pass in true to format the SPIFFS
   if (SPIFFS.begin())
   {
@@ -60,10 +64,10 @@ void Config::readConfig()
           g_log.write(Log::Error, "CONFIG: Config file bigger than allocated memory!");
           return;
         }
-        // Read the config file
+        // Read the config file. Make sure it matches with expectations. Otherwise wipe it.
         m_jsonConfig.clear();
-        DeserializationError error = deserializeJson(m_jsonConfig, configFile);
-        if (!error)
+        DeserializationError errorMsg = deserializeJson(m_jsonConfig, configFile);
+        if (!errorMsg && defaultConfig.size() == m_jsonConfig.size())
         {
           char outgoingJsonBuffer[500];
           serializeJson(m_jsonConfig, outgoingJsonBuffer);
@@ -71,19 +75,34 @@ void Config::readConfig()
         }
         else
         {
-          g_log.write(Log::Debug, "CONFIG: Failed to load json config: " + String(error.c_str()));
-          SPIFFS.format();
-          writeToMemory();
-          ESP.restart();
+          g_log.write(Log::Debug, "CONFIG: Failed to load json config: " + String(errorMsg.c_str()));
+          error = true;
         }
       }
+      else
+      {
+        g_log.write(Log::Debug, "CONFIG: Failed to open config.json. Creating new one..");
+        error = true;
+      }
       configFile.close();
+    }
+    else
+    {
+      g_log.write(Log::Debug, "CONFIG: config.json missing. Creating new one..");
+      error = true;
     }
   }
   else
   {
     g_log.write(Log::Warn, "CONFIG: SPIFFS Mount failed. Formatting SPIFFS..");
+    error = true;
+  }
+
+  // Format and rewrite the default config file
+  if (error)
+  {
     SPIFFS.format();
+    writeToMemory(defaultConfig);
     ESP.restart();
   }
 }

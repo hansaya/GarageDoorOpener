@@ -10,7 +10,7 @@ void Led::begin()
     // setup fast led
     FastLED.addLeds<NEOPIXEL, NEO_PIXEL_PIN>(m_leds, 1);
     FastLED.clear();
-    FastLED.setBrightness(1);
+    FastLED.setBrightness(10);
     FastLED.show();
 }
 

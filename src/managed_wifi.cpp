@@ -80,6 +80,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   WiFiManagerParameter customMqttPort("port", "MQTT port", g_config.getConfig()["mqtt_port"], 6);
   WiFiManagerParameter customMqttUser("user", "MQTT user", g_config.getConfig()["mqtt_user"], 20);
   WiFiManagerParameter customMqttPass("pass", "MQTT pass", g_config.getConfig()["mqtt_pass"], 20);
+  WiFiManagerParameter mqttPrefix("ha_prefix", "HA MQTT Prefix", g_config.getConfig()["ha_prefix"], 20);
 
   WiFiManager wifiManager;
   wifiManager.setConnectTimeout(60);
@@ -91,6 +92,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
   wifiManager.addParameter(&customMqttPort);
   wifiManager.addParameter(&customMqttUser);
   wifiManager.addParameter(&customMqttPass);
+  wifiManager.addParameter(&mqttPrefix);
   wifiManager.setSaveConfigCallback(ManagedWiFi::saveConfigCallback);
 
   if (reset_config)
@@ -110,6 +112,7 @@ void ManagedWiFi::manageWiFi(const bool reset_config)
     g_config.getConfig()["mqtt_port"] = customMqttPort.getValue();
     g_config.getConfig()["mqtt_user"] = customMqttUser.getValue();
     g_config.getConfig()["mqtt_pass"] = customMqttPass.getValue();
+    g_config.getConfig()["ha_prefix"] = mqttPrefix.getValue();
 
     g_log.write(Log::Debug, "WIFI: mqtt server: " + String(g_config.getConfig()["mqtt_server"].as<const char *>()));
     g_config.saveConfig();

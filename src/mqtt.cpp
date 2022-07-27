@@ -17,19 +17,18 @@ Mqtt::Mqtt()
 void Mqtt::begin()
 {
   snprintf(m_uniqueId, 20, "%02X%02X", g_managedWiFi.getMac()[4], g_managedWiFi.getMac()[5]);
-  snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
-  snprintf(m_availHeader, 50, "%s/%s/avail", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
+  snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", g_config.getConfig()["ha_prefix"].as<const char *>(), g_managedWiFi.getHostName().c_str());
+  snprintf(m_availHeader, 50, "%s/%s/avail", g_config.getConfig()["ha_prefix"].as<const char *>(), g_managedWiFi.getHostName().c_str());
 
   // Set the random seed for client id.
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(35));
 
   // Set the server settings
   m_client.setServer(g_config.getConfig()["mqtt_server"].as<const char *>(), atoi(g_config.getConfig()["mqtt_port"].as<const char *>()));
 
   // Call back for MQTT subs
-  m_client.setCallback([this](char *topic, byte *payload, unsigned int length) {
-    this->mqttCalllBack(topic, payload, length);
-  });
+  m_client.setCallback([this](char *topic, byte *payload, unsigned int length)
+                       { this->mqttCalllBack(topic, payload, length); });
 
   // Set the buffer size for json payload
   m_client.setBufferSize(812);
@@ -49,7 +48,7 @@ void Mqtt::begin()
     else if (payload == "offline")
     {
       m_hassioAlive = false;
-    }
+    } 
   });
 
   // If self "will" message goes offline, reconnect to the MQTT server.
@@ -63,7 +62,7 @@ void Mqtt::begin()
       m_connected = false;
       m_error = true;
       g_log.write(Log::Warn, "MQTT: Self \"will\" Message went offline.");
-    }
+    } 
   });
 }
 
@@ -79,10 +78,19 @@ void Mqtt::loop()
       mqttConnectWaitPeriod = currentMillis;
       connect();
       m_error = false;
+      m_configEvent = false;
     }
   }
 
-  // // Publish availability every 10 minutes
+  // If there is a change in config, resubscribe/publish config
+  if (m_configEvent && m_client.connected() && !m_error)
+  {
+    m_configEvent = false;
+    subscribe();
+    publishConfig();
+  }
+
+  // Publish availability every 10 minutes
   // if (m_client.connected())
   // {
   //   static unsigned long aliveMessageResendPeriod;
@@ -134,14 +142,8 @@ void Mqtt::connect()
   // Attempt to connect
   if (m_client.connect(m_uniqueId, g_config.getConfig()["mqtt_user"], g_config.getConfig()["mqtt_pass"], m_availHeader, MQTT_QOS, true, "offline"))
   {
-    // Subscribe to the topics.
-    for (int i = 0; i < m_subTopicCnt; i++)
-      subscribe(m_subTopics[i].c_str());
-
-    // Publish configs.
-    for (int i = 0; i < m_configCnt; i++)
-      m_configCallBacks[i]();
-
+    subscribe();
+    publishConfig();
     publishBirthMessage();
   }
   else
@@ -155,7 +157,7 @@ void Mqtt::publishToMQTT(const char *topic, const char *payload, bool retained)
 {
   if (m_client.publish(topic, payload, retained))
   {
-    String message = "MQTT: MQTT message published successfully, topic: " + String(topic) + ", payload: " + String(payload);
+    String message = "MQTT: Message published successfully, topic: " + String(topic) + ", payload: " + String(payload);
     g_log.write(Log::Debug, message);
     g_led.doubleFastBlink();
   }
@@ -173,6 +175,7 @@ void Mqtt::subscribe(String topic, TOPIC_CALLBACK_SIGNATURE callback)
   m_subTopics[m_subTopicCnt] = topic;
   m_subCallBacks[m_subTopicCnt] = callback;
   m_subTopicCnt++;
+  m_configEvent = true;
 }
 
 void Mqtt::subscribe(const char *topic)
@@ -181,10 +184,25 @@ void Mqtt::subscribe(const char *topic)
   m_client.subscribe(topic, MQTT_QOS);
 }
 
+void Mqtt::subscribe()
+{
+  // Subscribe to the topics.
+  for (int i = 0; i < m_subTopicCnt; i++)
+    subscribe(m_subTopics[i].c_str());
+}
+
 void Mqtt::publishConfig(CONFIG_CALLBACK_SIGNATURE callback)
 {
   m_configCallBacks[m_configCnt] = callback;
   m_configCnt++;
+  m_configEvent = true;
+}
+
+void Mqtt::publishConfig() const
+{
+  // Publish configs.
+  for (int i = 0; i < m_configCnt; i++)
+    m_configCallBacks[i]();
 }
 
 Mqtt g_mqtt;

@@ -39,7 +39,7 @@ private:
     /**
      * Write the config file to the memory.
      */
-    void writeToMemory();
+    void writeToMemory(DynamicJsonDocument &json);
 
     DynamicJsonDocument m_jsonConfig;
     bool m_shouldSaveConfig;

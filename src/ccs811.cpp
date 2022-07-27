@@ -3,6 +3,7 @@
 #include "mqtt.h"
 #include "managed_wifi.h"
 #include "led.h"
+#include "config.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
@@ -11,7 +12,7 @@
 
 void CCS811::begin()
 {
-    snprintf(m_topicMQTTHeader, 50, "%s/sensor/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
+    snprintf(m_topicMQTTHeader, 50, "%s/sensor/%s", g_config.getConfig()["ha_prefix"].as<const char *>(), g_managedWiFi.getHostName().c_str());
 
     // Setup cc811 sensor
     pinMode(CCS811_WAKE, OUTPUT);

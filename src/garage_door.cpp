@@ -3,6 +3,7 @@
 #include "mqtt.h"
 #include <ArduinoJson.h>
 #include "log.h"
+#include "config.h"
 
 unsigned long GarageDoor::m_lastCall = 0;
 
@@ -36,7 +37,7 @@ void GarageDoor::loop()
 
 void GarageDoor::begin()
 {
-    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", MQTT_HOME_ASSISTANT_DISCOVERY_PREFIX, g_managedWiFi.getHostName().c_str());
+    snprintf(m_topicMQTTHeader, 50, "%s/cover/%s", g_config.getConfig()["ha_prefix"].as<const char *>(), g_managedWiFi.getHostName().c_str());
     pinMode(m_relayPin, OUTPUT);
 
     m_sensor.begin();
@@ -87,6 +88,7 @@ void GarageDoor::buttonPress()
     }
     else
     {
+        g_log.write(Log::Debug, "GD: Call put on to a queue.");
         // Wait to press the button again.
         m_queueTicker.once_ms<GarageDoor *>(
             DELAY_BETWEEN_CALLS, [](GarageDoor *door) {

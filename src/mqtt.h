@@ -72,6 +72,12 @@ private:
      * @param[in] topic MQTT topic.
      */
     void subscribe(const char *topic);
+
+    /**
+     * Subscribe to a topic using the internal record.
+     */
+    void subscribe();
+
     /**
      * Call back function for MQTT messages.
      * @param[in] topic MQTT topic.
@@ -87,6 +93,10 @@ private:
      * Connect to mqtt server.
      */
     void connect();
+    /**
+     * Publish Config using the internal records.
+     */
+    void publishConfig() const;
 
     WiFiClient m_espClient;
     PubSubClient m_client;
@@ -101,6 +111,7 @@ private:
     bool m_hassioAlive;
     bool m_error;
     bool m_connected;
+    bool m_configEvent;
 };
 
 extern Mqtt g_mqtt;
